@@ -19,6 +19,9 @@ open index.html
 
 ## 1일차 (2026-09-20)
 
+- [Gleam](days/2026-09-20/pika.html) — Pika 스크린샷 에디터
+- [Flint](days/2026-09-20/raycast.html) — Raycast 커맨드 팔레트
+- [Sunday](days/2026-09-20/family.html) — Family 감성 월렛
 - [미팅 설정](days/2026-09-20/common.html) — common-first-disclosure
 - [계정](days/2026-09-20/save.html) — risk-tiered-save
 - [입고 대기열](days/2026-09-20/density.html) — density-mode-contract

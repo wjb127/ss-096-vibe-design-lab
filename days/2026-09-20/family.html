@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sunday</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#1b140f; --cream:#f3ece3; --paper:#fffaf4; --mut:#7a6d62; --coral:#e85d3a; --sage:#3d6b5a; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+      background:
+        linear-gradient(180deg, #f7f1e8 0%, #efe4d6 100%);
+      color: var(--ink);
+    }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: var(--mut); text-decoration: none; z-index: 20; }
+    .page { display: grid; place-items: center; min-height: 100vh; padding: 28px 16px 40px; }
+    .phone {
+      width: min(390px, 100%);
+      background: var(--paper);
+      border-radius: 36px;
+      box-shadow: 0 40px 80px rgba(80, 50, 20, .18);
+      overflow: hidden;
+      position: relative;
+      min-height: 740px;
+    }
+    .notch { height: 28px; display: flex; justify-content: center; align-items: end; color: var(--mut); font-size: 11px; }
+    .home { padding: 8px 22px 28px; }
+    .brand { font-family: Fraunces, serif; font-size: 22px; font-weight: 500; letter-spacing: -0.03em; }
+    .hero { margin: 28px 0 8px; }
+    .hero .k { font-size: 13px; color: var(--mut); }
+    .bal {
+      font-family: Fraunces, serif; font-size: 52px; font-weight: 500;
+      letter-spacing: -0.04em; line-height: 1; margin: 6px 0;
+    }
+    .delta { color: var(--sage); font-size: 13px; }
+    .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 22px 0 28px; }
+    .acts button {
+      height: 52px; border: 0; border-radius: 16px; cursor: pointer; font: inherit; font-weight: 500;
+    }
+    .send { background: var(--ink); color: #fff; }
+    .recv { background: #eadfd2; color: var(--ink); }
+    .sec { font-size: 13px; color: var(--mut); margin-bottom: 8px; }
+    .asset {
+      display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px 0; border-top: 1px solid #eadfd2;
+    }
+    .dot { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; font-size: 16px; }
+    .nm { font-weight: 500; }
+    .sub { font-size: 12px; color: var(--mut); }
+    .amt { text-align: right; font-weight: 500; }
+    .sheet {
+      position: absolute; inset: 0; background: rgba(27,20,15,.35);
+      display: none; align-items: end;
+    }
+    .sheet.on { display: flex; }
+    .card {
+      background: var(--paper); width: 100%;
+      border-radius: 28px 28px 0 0; padding: 18px 22px 28px;
+      animation: up .28s ease;
+    }
+    @keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .card h2 { font-family: Fraunces, serif; font-size: 28px; font-weight: 500; margin: 4px 0 14px; letter-spacing: -0.03em; }
+    label { display: block; font-size: 12px; color: var(--mut); margin: 10px 0 6px; }
+    input, select {
+      width: 100%; height: 48px; border: 1px solid #eadfd2; border-radius: 14px;
+      padding: 0 14px; font: inherit; background: #fff;
+    }
+    .err { color: #b42318; font-size: 12px; min-height: 18px; margin-top: 6px; }
+    .rowbtns { display: flex; gap: 8px; margin-top: 12px; }
+    .rowbtns button { flex: 1; height: 48px; border: 0; border-radius: 14px; font: inherit; font-weight: 500; cursor: pointer; }
+    .pri { background: var(--ink); color: #fff; }
+    .ghost { background: #eadfd2; }
+    .qr {
+      width: 180px; height: 180px; margin: 8px auto 14px;
+      display: grid; grid-template-columns: repeat(11, 1fr); gap: 3px;
+      background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #eadfd2;
+    }
+    .qr i { background: var(--ink); border-radius: 1px; }
+    .qr i.off { background: transparent; }
+    .addr { font-size: 12px; word-break: break-all; text-align: center; color: var(--mut); }
+    .ok {
+      text-align: center; padding: 28px 8px 12px;
+    }
+    .ok .mark {
+      width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 50%;
+      background: var(--sage); color: #fff; display: grid; place-items: center;
+      font-size: 32px; animation: pop .35s ease;
+    }
+    @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+    .ok h2 { font-family: Fraunces, serif; font-size: 32px; margin: 0 0 8px; }
+    .ok p { color: var(--mut); margin: 0 0 18px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="page">
+    <div class="phone">
+      <div class="notch">Sunday</div>
+      <div class="home" id="home">
+        <div class="brand">Sunday</div>
+        <div class="hero">
+          <div class="k">전체 잔액</div>
+          <div class="bal" id="bal">$8,240.50</div>
+          <div class="delta">오늘 +$126.40</div>
+        </div>
+        <div class="acts">
+          <button class="send" type="button" id="openSend">보내기</button>
+          <button class="recv" type="button" id="openRecv">받기</button>
+        </div>
+        <div class="sec">자산</div>
+        <div class="asset"><div class="dot" style="background:#ece7ff">◆</div><div><div class="nm">Ether</div><div class="sub">1.84 ETH</div></div><div class="amt">$6,210.00</div></div>
+        <div class="asset"><div class="dot" style="background:#dceee6">●</div><div><div class="nm">USD Coin</div><div class="sub">1,420 USDC</div></div><div class="amt">$1,420.00</div></div>
+        <div class="asset"><div class="dot" style="background:#fbe6d8">▲</div><div><div class="nm">Base</div><div class="sub">410 BASE</div></div><div class="amt">$610.50</div></div>
+      </div>
+      <div class="sheet" id="sheet"></div>
+    </div>
+  </div>
+  <script>
+    const sheet = document.getElementById("sheet");
+    const close = () => { sheet.classList.remove("on"); sheet.innerHTML = ""; };
+    const open = (html) => { sheet.innerHTML = html; sheet.classList.add("on"); };
+
+    function validAddr(v) {
+      return /^0x[a-fA-F0-9]{40}$/.test(v) || /^[a-z0-9-]+\.eth$/i.test(v);
+    }
+    document.getElementById("openSend").onclick = () => {
+      open(`<div class="card">
+        <h2>보내기</h2>
+        <label>자산</label>
+        <select id="tok"><option value="ETH">Ether</option><option value="USDC">USD Coin</option></select>
+        <label>얼마</label>
+        <input id="amt" inputmode="decimal" placeholder="0.00" />
+        <label>어디로</label>
+        <input id="to" placeholder="이름.eth 또는 0x…" />
+        <div class="err" id="err"></div>
+        <div class="rowbtns">
+          <button class="ghost" type="button" id="c1">닫기</button>
+          <button class="pri" type="button" id="next">다음</button>
+        </div>
+      </div>`);
+      document.getElementById("c1").onclick = close;
+      document.getElementById("next").onclick = () => {
+        const amt = document.getElementById("amt").value.trim();
+        const to = document.getElementById("to").value.trim();
+        const tok = document.getElementById("tok").value;
+        const n = Number(amt);
+        const err = document.getElementById("err");
+        if (!amt || !(n > 0)) { err.textContent = "보낼 금액을 적어 주세요."; return; }
+        if (!validAddr(to)) { err.textContent = "이름.eth 또는 0x 주소를 확인하세요."; return; }
+        confirmSend(n, tok, to);
+      };
+    };
+    function confirmSend(n, tok, to) {
+      open(`<div class="card">
+        <h2>한번 더</h2>
+        <p style="color:var(--mut);margin:0 0 16px">${n} ${tok}를 ${to}(으)로 보냅니다. 체인에 올라가면 되돌리기 어렵습니다.</p>
+        <div class="rowbtns">
+          <button class="ghost" type="button" id="back">수정</button>
+          <button class="pri" type="button" id="go">보내기</button>
+        </div>
+      </div>`);
+      document.getElementById("back").onclick = () => document.getElementById("openSend").click();
+      document.getElementById("go").onclick = () => {
+        open(`<div class="card"><div class="ok">
+          <div class="mark">✓</div>
+          <h2>보냈어요</h2>
+          <p>${n} ${tok} · ${to}</p>
+          <button class="pri" type="button" id="done" style="width:100%;height:48px;border:0;border-radius:14px">홈으로</button>
+        </div></div>`);
+        document.getElementById("done").onclick = close;
+      };
+    }
+    document.getElementById("openRecv").onclick = () => {
+      const addr = "0xA19c2eB4dD11e0001111E0bB42c0ffee";
+      const bits = [];
+      for (let i = 0; i < 121; i++) bits.push((addr.charCodeAt(i % addr.length) + i) % 3 === 0);
+      open(`<div class="card">
+        <h2>받기</h2>
+        <p style="color:var(--mut);margin:0 0 8px">이 코드로 자산을 받을 수 있어요.</p>
+        <div class="qr">${bits.map((on) => `<i class="${on ? "" : "off"}"></i>`).join("")}</div>
+        <div class="addr" id="addr">${addr}</div>
+        <div class="rowbtns">
+          <button class="ghost" type="button" id="c2">닫기</button>
+          <button class="pri" type="button" id="copy">주소 복사</button>
+        </div>
+      </div>`);
+      document.getElementById("c2").onclick = close;
+      document.getElementById("copy").onclick = async () => {
+        await navigator.clipboard.writeText(addr).catch(() => {});
+        document.getElementById("copy").textContent = "복사됨";
+      };
+    };
+    sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
+  </script>
+</body>
+</html>

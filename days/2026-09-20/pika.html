@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gleam — screenshot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pad: 48px; --round: 16px; --shadow: 3; --grad: linear-gradient(135deg,#ff7a59,#7b5cff 50%,#3ec7ff);
+      --ratio: auto;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+      background: #0e0f12; color: #ececec;
+      display: grid; grid-template-rows: 52px 1fr;
+    }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 40; font-size: 11px; color: #7a7d85; text-decoration: none; }
+    header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 18px 0 56px; border-bottom: 1px solid #1c1e24;
+    }
+    .mark {
+      width: 22px; height: 22px; border-radius: 6px;
+      background: conic-gradient(from 210deg, #ff7a59, #7b5cff, #3ec7ff, #ff7a59);
+    }
+    header strong { font-weight: 600; letter-spacing: -0.03em; }
+    header span { color: #7a7d85; font-size: 12px; }
+    .layout { display: grid; grid-template-columns: 1fr 300px; min-height: 0; }
+    .stage {
+      display: grid; place-items: center;
+      padding: 28px; overflow: auto;
+      background:
+        radial-gradient(1200px 500px at 50% 0%, #1a1c24, transparent 60%),
+        #0e0f12;
+    }
+    .canvas {
+      display: flex; align-items: center; justify-content: center;
+      background: var(--grad);
+      padding: var(--pad);
+      width: min(100%, 860px);
+      aspect-ratio: var(--ratio);
+      transition: padding .15s, background .2s;
+    }
+    .shot {
+      position: relative;
+      max-width: 100%;
+      border-radius: var(--round);
+      box-shadow: 0 calc(var(--shadow) * 8px) calc(var(--shadow) * 22px) rgba(0,0,0, calc(.18 + var(--shadow) * .06));
+      overflow: hidden;
+      background: #111;
+    }
+    .shot img { display: block; width: 100%; max-height: 52vh; object-fit: contain; background: #111; }
+    .chrome {
+      display: none; align-items: center; gap: 7px;
+      height: 36px; padding: 0 12px;
+      background: #2b2d32;
+    }
+    .canvas.mac .chrome { display: flex; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .d1 { background: #ff5f57; } .d2 { background: #febc2e; } .d3 { background: #28c840; }
+    .empty {
+      width: min(520px, 100%);
+      border: 1px dashed #3a3d46; border-radius: 16px;
+      padding: 48px 24px; text-align: center; color: #9aa0ab;
+      background: rgba(255,255,255,.03);
+    }
+    .empty h2 { margin: 0 0 8px; color: #fff; font-size: 18px; font-weight: 550; }
+    .empty p { margin: 0 0 18px; font-size: 13px; }
+    .btn {
+      height: 34px; padding: 0 14px; border-radius: 8px; border: 0; cursor: pointer;
+      font: inherit; font-weight: 500;
+    }
+    .btn.ghost { background: #1c1e24; color: #eee; border: 1px solid #2c2f38; }
+    .btn.pri { background: #fff; color: #111; }
+    .side {
+      border-left: 1px solid #1c1e24; background: #121318;
+      padding: 16px 16px 24px; overflow: auto;
+    }
+    .lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #7a7d85; margin: 16px 0 8px; }
+    .chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .chip {
+      height: 36px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; padding: 0;
+    }
+    .chip.on { border-color: #fff; }
+    .row { display: flex; justify-content: space-between; font-size: 12px; color: #9aa0ab; margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: #c9cdd6; }
+    .seg { display: flex; gap: 6px; flex-wrap: wrap; }
+    .seg button, .side select {
+      height: 30px; padding: 0 10px; border-radius: 7px;
+      border: 1px solid #2c2f38; background: #1c1e24; color: #ddd; cursor: pointer; font: inherit;
+    }
+    .seg button.on { background: #fff; color: #111; border-color: #fff; }
+    .export { display: flex; gap: 8px; margin-top: 20px; }
+    .export .btn { flex: 1; }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #fff; color: #111; padding: 8px 14px; border-radius: 999px;
+      font-size: 13px; display: none; z-index: 50;
+    }
+    .toast.on { display: block; }
+    input[type=file] { display: none; }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .side { border-left: 0; border-top: 1px solid #1c1e24; }
+    }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <header>
+    <div class="mark" aria-hidden="true"></div>
+    <strong>Gleam</strong>
+    <span>마케팅 스크린샷</span>
+  </header>
+  <div class="layout">
+    <main class="stage" id="stage">
+      <div class="empty" id="drop">
+        <h2>이미지를 올려 주세요</h2>
+        <p>드래그, 붙여넣기, 또는 파일 선택. 데모로 바로 시작해도 됩니다.</p>
+        <button class="btn pri" type="button" id="pick">이미지 선택</button>
+        <button class="btn ghost" type="button" id="demo">데모 쓰기</button>
+      </div>
+      <div class="canvas" id="canvas" hidden>
+        <div class="shot" id="shot">
+          <div class="chrome" aria-hidden="true"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span></div>
+          <img id="img" alt="편집 중인 스크린샷" />
+        </div>
+      </div>
+    </main>
+    <aside class="side">
+      <div class="lbl">그라디언트</div>
+      <div class="chips" id="chips"></div>
+      <div class="lbl">패딩</div>
+      <div class="row"><span>Padding</span><span id="padV">48</span></div>
+      <input type="range" id="pad" min="8" max="96" value="48" />
+      <div class="lbl">라운드</div>
+      <div class="row"><span>Roundness</span><span id="roundV">16</span></div>
+      <input type="range" id="round" min="0" max="40" value="16" />
+      <div class="lbl">그림자</div>
+      <div class="row"><span>Shadow</span><span id="shV">3</span></div>
+      <input type="range" id="shadow" min="0" max="8" value="3" />
+      <div class="lbl">프레임</div>
+      <div class="seg" id="frame">
+        <button type="button" data-frame="none" class="on">없음</button>
+        <button type="button" data-frame="mac">macOS</button>
+      </div>
+      <div class="lbl">캔버스</div>
+      <div class="seg" id="ratio">
+        <button type="button" data-ratio="auto" class="on">Auto</button>
+        <button type="button" data-ratio="16/9">16:9</button>
+        <button type="button" data-ratio="1/1">1:1</button>
+        <button type="button" data-ratio="4/5">4:5</button>
+        <button type="button" data-ratio="1.91/1">OG</button>
+      </div>
+      <div class="export">
+        <button class="btn ghost" type="button" id="copy">Copy</button>
+        <button class="btn pri" type="button" id="dl">Download</button>
+      </div>
+    </aside>
+  </div>
+  <input type="file" id="file" accept="image/*" />
+  <div class="toast" id="toast"></div>
+  <script>
+    const GRADS = [
+      "linear-gradient(135deg,#ff7a59,#7b5cff 50%,#3ec7ff)",
+      "linear-gradient(135deg,#0f0c29,#302b63,#24243e)",
+      "linear-gradient(160deg,#f6d365,#fda085)",
+      "linear-gradient(135deg,#89f7fe,#66a6ff)",
+      "linear-gradient(135deg,#d299c2,#fef9d7)",
+      "linear-gradient(160deg,#c2e59c,#64b3f4)",
+      "linear-gradient(135deg,#232526,#414345)",
+      "linear-gradient(135deg,#ff9a9e,#fecfef)",
+      "linear-gradient(135deg,#141e30,#243b55)",
+      "linear-gradient(135deg,#fdfcfb,#e2d1c3)",
+    ];
+    const root = document.documentElement;
+    const toast = (m) => {
+      const t = document.getElementById("toast");
+      t.textContent = m; t.classList.add("on");
+      clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 1600);
+    };
+    const chips = document.getElementById("chips");
+    GRADS.forEach((g, i) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (i === 0 ? " on" : "");
+      b.style.background = g;
+      b.title = "그라디언트 " + (i + 1);
+      b.addEventListener("click", () => {
+        chips.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
+        b.classList.add("on");
+        root.style.setProperty("--grad", g);
+        document.getElementById("canvas").style.background = g;
+      });
+      chips.appendChild(b);
+    });
+
+    const bind = (id, css, out) => {
+      const el = document.getElementById(id);
+      el.addEventListener("input", () => {
+        document.getElementById(out).textContent = el.value;
+        root.style.setProperty(css, el.value + (css === "--shadow" ? "" : "px"));
+      });
+    };
+    bind("pad", "--pad", "padV");
+    bind("round", "--round", "roundV");
+    bind("shadow", "--shadow", "shV");
+
+    document.getElementById("frame").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-frame]"); if (!b) return;
+      [...e.currentTarget.children].forEach((x) => x.classList.toggle("on", x === b));
+      document.getElementById("canvas").classList.toggle("mac", b.dataset.frame === "mac");
+    });
+    document.getElementById("ratio").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ratio]"); if (!b) return;
+      [...e.currentTarget.children].forEach((x) => x.classList.toggle("on", x === b));
+      root.style.setProperty("--ratio", b.dataset.ratio);
+    });
+
+    function showImage(src) {
+      document.getElementById("img").src = src;
+      document.getElementById("drop").hidden = true;
+      document.getElementById("canvas").hidden = false;
+    }
+    function demoSrc() {
+      const c = document.createElement("canvas");
+      c.width = 1280; c.height = 800;
+      const x = c.getContext("2d");
+      x.fillStyle = "#0f1117"; x.fillRect(0, 0, 1280, 800);
+      x.fillStyle = "#161922"; x.fillRect(0, 0, 220, 800);
+      x.fillStyle = "#6ee7b7"; x.beginPath(); x.roundRect(28, 28, 28, 28, 8); x.fill();
+      x.fillStyle = "#8b90a0"; x.font = "500 18px sans-serif";
+      ["Overview", "Revenue", "Audience", "Settings"].forEach((t, i) => x.fillText(t, 36, 110 + i * 44));
+      x.fillStyle = "#fff"; x.font = "600 36px sans-serif"; x.fillText("Northwind", 268, 78);
+      x.fillStyle = "#8b90a0"; x.font = "16px sans-serif"; x.fillText("Last 30 days", 268, 104);
+      [["$128,400","Revenue"],["4.2%","Conv."],["18.4k","Visits"]].forEach((p, i) => {
+        const left = 268 + i * 300;
+        x.fillStyle = "#1b1f2a"; x.beginPath(); x.roundRect(left, 150, 270, 120, 16); x.fill();
+        x.fillStyle = "#fff"; x.font = "600 28px sans-serif"; x.fillText(p[0], left + 22, 204);
+        x.fillStyle = "#8b90a0"; x.font = "14px sans-serif"; x.fillText(p[1], left + 22, 232);
+      });
+      const bars = [40, 70, 55, 90, 60, 80, 95, 50, 75, 88];
+      bars.forEach((h, i) => {
+        x.fillStyle = i === 6 ? "#6ee7b7" : "#2a3142";
+        x.beginPath(); x.roundRect(280 + i * 88, 560 - h * 2.2, 48, h * 2.2, 8); x.fill();
+      });
+      return c.toDataURL("image/png");
+    }
+    document.getElementById("demo").onclick = () => showImage(demoSrc());
+    document.getElementById("pick").onclick = () => document.getElementById("file").click();
+    document.getElementById("file").onchange = (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = () => showImage(r.result); r.readAsDataURL(f);
+    };
+    const stage = document.getElementById("stage");
+    stage.addEventListener("dragover", (e) => { e.preventDefault(); });
+    stage.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const f = e.dataTransfer.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = () => showImage(r.result); r.readAsDataURL(f);
+    });
+    document.addEventListener("paste", (e) => {
+      const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith("image/"));
+      if (!item) return;
+      const r = new FileReader(); r.onload = () => showImage(r.result); r.readAsDataURL(item.getAsFile());
+    });
+
+    function parseGrad(css) {
+      const m = css.match(/linear-gradient\((.+)\)/);
+      if (!m) return { ang: 135, stops: ["#333", "#111"] };
+      const parts = m[1].split(/,(?![^()]*\))/);
+      let ang = 135;
+      if (parts[0].includes("deg")) { ang = parseFloat(parts.shift()); }
+      const stops = parts.map((p) => p.trim().split(" ")[0]);
+      return { ang, stops };
+    }
+    function exportCanvas() {
+      const img = document.getElementById("img");
+      if (!img.src) { toast("먼저 이미지를 올리세요"); return null; }
+      const pad = +document.getElementById("pad").value;
+      const round = +document.getElementById("round").value;
+      const sh = +document.getElementById("shadow").value;
+      const mac = document.getElementById("canvas").classList.contains("mac");
+      const ratio = getComputedStyle(root).getPropertyValue("--ratio").trim();
+      const iw = img.naturalWidth || 1280, ih = img.naturalHeight || 800;
+      const chromeH = mac ? 44 : 0;
+      const contentW = 1200, contentH = contentW * (ih / iw);
+      let cw = contentW + pad * 2, ch = contentH + chromeH + pad * 2;
+      if (ratio !== "auto") {
+        const [a, b] = ratio.split("/").map(Number);
+        const target = a / b;
+        if (cw / ch > target) ch = cw / target; else cw = ch * target;
+      }
+      const c = document.createElement("canvas");
+      c.width = cw; c.height = ch;
+      const x = c.getContext("2d");
+      const g = parseGrad(getComputedStyle(document.getElementById("canvas")).backgroundImage);
+      const rad = (g.ang * Math.PI) / 180;
+      const lg = x.createLinearGradient(cw/2 - Math.cos(rad)*cw, ch/2 - Math.sin(rad)*ch, cw/2 + Math.cos(rad)*cw, ch/2 + Math.sin(rad)*ch);
+      g.stops.forEach((col, i) => lg.addColorStop(i / Math.max(1, g.stops.length - 1), col));
+      x.fillStyle = lg; x.fillRect(0, 0, cw, ch);
+      const dx = (cw - contentW) / 2, dy = (ch - contentH - chromeH) / 2;
+      x.save();
+      x.shadowColor = "rgba(0,0,0," + (0.18 + sh * 0.06) + ")";
+      x.shadowBlur = sh * 22; x.shadowOffsetY = sh * 8;
+      roundRect(x, dx, dy, contentW, contentH + chromeH, round);
+      x.fillStyle = "#111"; x.fill();
+      x.restore();
+      x.save();
+      roundRect(x, dx, dy, contentW, contentH + chromeH, round); x.clip();
+      if (mac) {
+        x.fillStyle = "#2b2d32"; x.fillRect(dx, dy, contentW, chromeH);
+        [["#ff5f57", 18], ["#febc2e", 36], ["#28c840", 54]].forEach(([col, ox]) => {
+          x.fillStyle = col; x.beginPath(); x.arc(dx + ox, dy + 22, 6, 0, 7); x.fill();
+        });
+      }
+      x.drawImage(img, dx, dy + chromeH, contentW, contentH);
+      x.restore();
+      return c;
+    }
+    function roundRect(x, a, b, w, h, r) {
+      r = Math.min(r, w/2, h/2);
+      x.beginPath();
+      x.moveTo(a + r, b);
+      x.arcTo(a + w, b, a + w, b + h, r);
+      x.arcTo(a + w, b + h, a, b + h, r);
+      x.arcTo(a, b + h, a, b, r);
+      x.arcTo(a, b, a + w, b, r);
+      x.closePath();
+    }
+    document.getElementById("dl").onclick = () => {
+      const c = exportCanvas(); if (!c) return;
+      c.toBlob((blob) => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "gleam.png"; a.click();
+        URL.revokeObjectURL(a.href);
+        toast("저장했습니다");
+      });
+    };
+    document.getElementById("copy").onclick = async () => {
+      const c = exportCanvas(); if (!c) return;
+      c.toBlob(async (blob) => {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          toast("클립보드에 복사");
+        } catch {
+          toast("이 브라우저는 이미지 복사를 막았습니다. Download를 쓰세요");
+        }
+      });
+    };
+  </script>
+</body>
+</html>

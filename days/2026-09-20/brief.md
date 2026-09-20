@@ -36,3 +36,14 @@
    고빈도만 기본. 고급 한 겹. 그룹은 이름만. 입장용 카메라/마이크는 숨기지 않음. 20+면 검색(라벨·설명·동의어).
 4. risk-tiered-save → `save.html`  
    저위험 자동저장 / 필드 인라인 / 구역 저장 / 긴 폼 스티키+이탈경고 / 위험 구역은 확인+결과 카피. 로딩·성공·실패·권한 잠금.
+
+---
+
+# 미학 + 인터랙션
+
+## 레퍼런스
+- Pika https://pika.style/templates/screenshot-editor → `pika.html` (Gleam)
+- Raycast https://www.raycast.com/ → `raycast.html` (Flint)
+- Family https://family.co/ → `family.html` (Sunday)
+
+로고 복제 없음. 톤·플로우만.
