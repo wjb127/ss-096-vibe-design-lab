@@ -47,3 +47,11 @@
 - Family https://family.co/ → `family.html` (Sunday)
 
 로고 복제 없음. 톤·플로우만.
+
+---
+
+# v4 — 화면 타입 안 겹침
+
+- Cosmos https://www.cosmos.so/explore → `cosmos.html` (Grove) 메이슨리·컬러칩·디테일
+- Craft https://www.craft.do/ → `craft.html` (Linen) 커버·/블록·todo
+- Pitch https://pitch.com/ → `pitch.html` (Stage) 필름스트립·테마·Present

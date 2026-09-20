@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      background: #ece8e2; color: #161513;
+      display: grid; grid-template-rows: 48px 1fr;
+    }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 40; font-size: 11px; color: #7a746c; text-decoration: none; }
+    header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px 0 56px; background: #fff; border-bottom: 1px solid #e2ddd6;
+    }
+    .mark { width: 18px; height: 18px; border-radius: 5px; background: #161513; }
+    header strong { font-weight: 600; letter-spacing: -0.03em; }
+    .grow { flex: 1; }
+    header button, .themes button {
+      height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid #ddd7ce;
+      background: #fff; cursor: pointer; font: inherit; font-size: 12px;
+    }
+    header .pri { background: #161513; color: #fff; border-color: #161513; }
+    .work { display: grid; grid-template-columns: 148px 1fr; min-height: 0; }
+    .strip {
+      background: #f7f4ef; border-right: 1px solid #e2ddd6;
+      padding: 12px; overflow: auto;
+    }
+    .thumb {
+      aspect-ratio: 16/9; border-radius: 8px; margin-bottom: 8px;
+      border: 2px solid transparent; cursor: pointer; overflow: hidden;
+      font-size: 8px; padding: 8px; color: inherit;
+    }
+    .thumb.on { border-color: #161513; }
+    .thumb h4 { margin: 0 0 4px; font-size: 9px; }
+    .add {
+      width: 100%; height: 36px; border: 1px dashed #cfc8bd; border-radius: 8px;
+      background: transparent; cursor: pointer; font: inherit; color: #7a746c;
+    }
+    .stage { display: grid; place-items: center; padding: 28px; }
+    .slide {
+      width: min(920px, 100%); aspect-ratio: 16/9; border-radius: 14px;
+      box-shadow: 0 24px 60px rgba(40,30,20,.12); padding: 48px 56px;
+      display: flex; flex-direction: column; justify-content: center; gap: 12px;
+    }
+    .slide [contenteditable] { outline: 0; }
+    .slide h2 {
+      font-size: clamp(28px, 4.4vw, 52px); font-weight: 650; letter-spacing: -0.04em; margin: 0;
+    }
+    .slide p { font-size: clamp(15px, 1.8vw, 22px); margin: 0; opacity: .82; line-height: 1.4; max-width: 28ch; }
+    .bar { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+    .themes { display: flex; gap: 8px; }
+    .themes button { width: 28px; height: 28px; padding: 0; border-radius: 50%; }
+    .themes button.on { outline: 2px solid #161513; outline-offset: 2px; }
+    .present {
+      position: fixed; inset: 0; background: #111; display: none; z-index: 50;
+      place-items: center;
+    }
+    .present.on { display: grid; }
+    .present .slide { width: min(1100px, 92vw); box-shadow: none; }
+    .phint { position: fixed; bottom: 16px; color: #888; font-size: 12px; }
+    .t-midnight { background: #14161c; color: #f3f4f7; }
+    .t-paper { background: #fffaf3; color: #1b1712; }
+    .t-coral { background: #e85d3a; color: #fff7f2; }
+    .t-forest { background: #1f3d32; color: #e7f3ec; }
+    .t-sand { background: #e7d3b0; color: #2a2118; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <header>
+    <div class="mark"></div>
+    <strong>Stage</strong>
+    <span class="grow"></span>
+    <div class="themes" id="themes"></div>
+    <button type="button" id="addTop">슬라이드</button>
+    <button class="pri" type="button" id="presentBtn">Present</button>
+  </header>
+  <div class="work">
+    <aside class="strip" id="strip"></aside>
+    <main class="stage">
+      <div>
+        <div class="slide" id="canvas"></div>
+        <div class="bar"><span style="font-size:12px;color:#7a746c" id="pos"></span></div>
+      </div>
+    </main>
+  </div>
+  <div class="present" id="present">
+    <div class="slide" id="pSlide"></div>
+    <div class="phint">← → · Esc</div>
+  </div>
+  <script>
+    const THEMES = [
+      { id: "midnight", hex: "#14161c" },
+      { id: "paper", hex: "#fffaf3" },
+      { id: "coral", hex: "#e85d3a" },
+      { id: "forest", hex: "#1f3d32" },
+      { id: "sand", hex: "#e7d3b0" },
+    ];
+    let theme = "paper", cur = 0, presenting = false;
+    let slides = [
+      { title: "Create slides that land.", body: "짧은 덱. 한 생각, 한 화면." },
+      { title: "팀이 같이 고칩니다.", body: "필름스트립에서 고르고, 가운데서 씁니다." },
+      { title: "테마는 칩 하나.", body: "색만 바뀌고 위계는 그대로." },
+    ];
+
+    function paint(el, s) {
+      el.className = "slide t-" + theme;
+      el.innerHTML = `<h2 contenteditable="true" data-f="title">${s.title}</h2><p contenteditable="true" data-f="body">${s.body}</p>`;
+    }
+    function render() {
+      document.getElementById("strip").innerHTML = slides.map((s, i) =>
+        `<div class="thumb t-${theme} ${i === cur ? "on" : ""}" data-i="${i}"><h4>${s.title}</h4>${s.body}</div>`
+      ).join("") + `<button class="add" id="add">+ 슬라이드</button>`;
+      paint(document.getElementById("canvas"), slides[cur]);
+      document.getElementById("pos").textContent = (cur + 1) + " / " + slides.length;
+      document.getElementById("themes").innerHTML = THEMES.map((t) =>
+        `<button type="button" class="${t.id === theme ? "on" : ""}" data-th="${t.id}" style="background:${t.hex}" title="${t.id}"></button>`
+      ).join("");
+    }
+    function add() {
+      slides.push({ title: "새 슬라이드", body: "본문을 적어 주세요." });
+      cur = slides.length - 1; render();
+    }
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-th]"); if (!b) return;
+      theme = b.dataset.th; render();
+    });
+    document.getElementById("strip").addEventListener("click", (e) => {
+      if (e.target.id === "add") { add(); return; }
+      const t = e.target.closest("[data-i]"); if (t) { cur = +t.dataset.i; render(); }
+    });
+    document.getElementById("addTop").onclick = add;
+    document.getElementById("canvas").addEventListener("input", (e) => {
+      const f = e.target.dataset.f; if (!f) return;
+      slides[cur][f] = e.target.innerText;
+      renderKeep();
+    });
+    function renderKeep() {
+      const ae = document.activeElement;
+      const f = ae && ae.dataset.f;
+      const strip = document.getElementById("strip");
+      strip.innerHTML = slides.map((s, i) =>
+        `<div class="thumb t-${theme} ${i === cur ? "on" : ""}" data-i="${i}"><h4>${s.title}</h4>${s.body}</div>`
+      ).join("") + `<button class="add" id="add">+ 슬라이드</button>`;
+      document.getElementById("pos").textContent = (cur + 1) + " / " + slides.length;
+      if (f) {
+        const el = document.querySelector(`#canvas [data-f="${f}"]`);
+        el && el.focus();
+      }
+    }
+    function showPresent() {
+      presenting = true;
+      document.getElementById("present").classList.add("on");
+      paint(document.getElementById("pSlide"), slides[cur]);
+      document.getElementById("pSlide").querySelectorAll("[contenteditable]").forEach((n) => n.removeAttribute("contenteditable"));
+    }
+    function hidePresent() {
+      presenting = false;
+      document.getElementById("present").classList.remove("on");
+    }
+    document.getElementById("presentBtn").onclick = showPresent;
+    document.addEventListener("keydown", (e) => {
+      if (!presenting) return;
+      if (e.key === "Escape") hidePresent();
+      if (e.key === "ArrowRight" || e.key === " ") { cur = Math.min(slides.length - 1, cur + 1); showPresent(); }
+      if (e.key === "ArrowLeft") { cur = Math.max(0, cur - 1); showPresent(); }
+    });
+    render();
+  </script>
+</body>
+</html>

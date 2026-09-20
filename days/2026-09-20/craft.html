@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Linen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#f6f3ee; --ink:#1c1916; --mut:#8a8178; --line:#e7e1d8; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    a.lab { position: fixed; top: 10px; left: 12px; z-index: 20; font-size: 11px; color: var(--mut); text-decoration: none; }
+    .page { max-width: 720px; margin: 0 auto; padding: 36px 24px 80px; }
+    .cover {
+      height: 180px; border-radius: 16px; margin-bottom: 22px; cursor: pointer;
+      display: grid; place-items: end start; padding: 12px 14px;
+      color: rgba(255,255,255,.8); font-size: 11px; letter-spacing: .06em;
+    }
+    .title {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 40px; font-weight: 600; letter-spacing: -0.03em;
+      border: 0; outline: 0; background: transparent; width: 100%; color: inherit;
+      margin: 0 0 18px;
+    }
+    .meta { color: var(--mut); font-size: 12px; margin-bottom: 18px; }
+    .block {
+      position: relative; padding: 4px 0 4px 28px; min-height: 28px;
+    }
+    .block [contenteditable] {
+      outline: 0; font-size: 16.5px; line-height: 1.6;
+      font-family: "Source Serif 4", Georgia, serif;
+    }
+    .block.h [contenteditable] { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+    .block.div { padding-left: 0; }
+    .block.div hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+    .todo {
+      position: absolute; left: 0; top: 7px; width: 16px; height: 16px;
+      border: 1.5px solid #b9b0a6; border-radius: 4px; background: #fff; cursor: pointer;
+    }
+    .block.done [contenteditable] { color: var(--mut); text-decoration: line-through; }
+    .block.done .todo { background: var(--ink); border-color: var(--ink); }
+    .slash {
+      position: absolute; z-index: 10; width: 220px;
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      box-shadow: 0 16px 40px rgba(40,30,20,.12); padding: 6px; display: none;
+    }
+    .slash.on { display: block; }
+    .slash button {
+      display: block; width: 100%; text-align: left; border: 0; background: none;
+      padding: 8px 10px; border-radius: 7px; cursor: pointer; font: inherit; font-size: 13px;
+    }
+    .slash button:hover, .slash button.on { background: #f3eee6; }
+    .hint { color: var(--mut); font-size: 12px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="page">
+    <div class="cover" id="cover">COVER · 클릭해서 바꾸기</div>
+    <input class="title" id="title" value="가을 작업 노트" />
+    <div class="meta"><span id="remain">할 일 3 남음</span> · / 로 블록 삽입</div>
+    <div id="doc"></div>
+    <div class="slash" id="slash"></div>
+    <p class="hint">Enter 새 줄 · 빈 줄에서 Backspace 삭제 · 할 일 체크하면 남은 수가 줄어듭니다.</p>
+  </div>
+  <script>
+    const COVERS = [
+      "linear-gradient(135deg,#d7c4b0,#8a6a52)",
+      "linear-gradient(160deg,#c5d4c8,#6f8f78)",
+      "linear-gradient(135deg,#1c1916,#4a4038)",
+      "linear-gradient(160deg,#e8d5c4,#c47a5a)",
+      "linear-gradient(135deg,#dfe7ee,#7b8fa3)",
+    ];
+    let coverI = 0, slashAt = null;
+    let blocks = [
+      { type: "p", text: "오늘의 작업은 조용히, 한 가지만." },
+      { type: "h", text: "해야 할 것" },
+      { type: "todo", text: "레퍼런스 세 장 모으기", done: false },
+      { type: "todo", text: "표지 색 고르기", done: false },
+      { type: "todo", text: "초고 한 단락", done: true },
+      { type: "div" },
+      { type: "p", text: "남는 할 일은 위에 숫자로 보입니다." },
+    ];
+
+    function remain() {
+      const n = blocks.filter((b) => b.type === "todo" && !b.done).length;
+      document.getElementById("remain").textContent = n ? `할 일 ${n} 남음` : "할 일 없음";
+    }
+    function hideSlash() { document.getElementById("slash").classList.remove("on"); slashAt = null; }
+
+    function render(focusIdx, caretEnd) {
+      const doc = document.getElementById("doc");
+      doc.innerHTML = blocks.map((b, i) => {
+        if (b.type === "div") return `<div class="block div" data-i="${i}"><hr/></div>`;
+        const todo = b.type === "todo" ? `<button class="todo" data-check="${i}" aria-label="완료"></button>` : "";
+        const cls = "block " + (b.type === "h" ? "h" : "") + (b.done ? " done" : "");
+        return `<div class="${cls}" data-i="${i}">${todo}<div contenteditable="true" data-ed="${i}">${b.text || ""}</div></div>`;
+      }).join("");
+      remain();
+      if (focusIdx != null) {
+        const el = doc.querySelector(`[data-ed="${focusIdx}"]`);
+        if (el) {
+          el.focus();
+          const r = document.createRange(); r.selectNodeContents(el); r.collapse(!caretEnd ? false : false);
+          if (caretEnd === "start") r.collapse(true); else r.collapse(false);
+          const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        }
+      }
+    }
+
+    document.getElementById("cover").style.background = COVERS[0];
+    document.getElementById("cover").onclick = () => {
+      coverI = (coverI + 1) % COVERS.length;
+      document.getElementById("cover").style.background = COVERS[coverI];
+    };
+
+    document.getElementById("doc").addEventListener("input", (e) => {
+      const ed = e.target.closest("[data-ed]"); if (!ed) return;
+      const i = +ed.dataset.ed;
+      const t = ed.innerText.replace(/\n/g, "");
+      if (t.startsWith("/")) {
+        slashAt = i;
+        const menu = document.getElementById("slash");
+        const rect = ed.getBoundingClientRect();
+        menu.style.left = rect.left + "px";
+        menu.style.top = (rect.bottom + 6 + scrollY) + "px";
+        menu.classList.add("on");
+        menu.innerHTML = [
+          ["p", "본문"], ["h", "제목"], ["todo", "할 일"], ["div", "구분선"]
+        ].map(([k, n]) => `<button data-ins="${k}">${n}</button>`).join("");
+      } else hideSlash();
+      blocks[i].text = t.replace(/^\/.*/, blocks[i].text);
+      if (!t.startsWith("/")) blocks[i].text = t;
+    });
+    document.getElementById("doc").addEventListener("click", (e) => {
+      const c = e.target.closest("[data-check]");
+      if (!c) return;
+      const i = +c.dataset.check;
+      blocks[i].done = !blocks[i].done;
+      render(i);
+    });
+    document.getElementById("slash").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ins]"); if (!b || slashAt == null) return;
+      const type = b.dataset.ins;
+      blocks[slashAt] = type === "todo" ? { type, text: "", done: false } : type === "div" ? { type } : { type, text: "" };
+      const idx = slashAt; hideSlash(); render(type === "div" ? idx + 1 : idx, "start");
+      if (type === "div") {
+        blocks.splice(idx + 1, 0, { type: "p", text: "" });
+        render(idx + 1, "start");
+      }
+    });
+    document.getElementById("doc").addEventListener("keydown", (e) => {
+      const ed = e.target.closest("[data-ed]"); if (!ed) return;
+      const i = +ed.dataset.ed;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        hideSlash();
+        blocks[i].text = ed.innerText.replace(/\n/g, "");
+        const next = blocks[i].type === "todo" ? { type: "todo", text: "", done: false } : { type: "p", text: "" };
+        blocks.splice(i + 1, 0, next);
+        render(i + 1, "start");
+      }
+      if (e.key === "Backspace" && ed.innerText === "" && blocks.length > 1) {
+        e.preventDefault();
+        blocks.splice(i, 1);
+        render(Math.max(0, i - 1));
+      }
+      if (e.key === "Escape") hideSlash();
+    });
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#slash") && !e.target.closest("[data-ed]")) hideSlash();
+    });
+    render();
+  </script>
+</body>
+</html>

@@ -19,6 +19,9 @@ open index.html
 
 ## 1일차 (2026-09-20)
 
+- [Grove](days/2026-09-20/cosmos.html) — Cosmos 모자이크
+- [Linen](days/2026-09-20/craft.html) — Craft 블록 문서
+- [Stage](days/2026-09-20/pitch.html) — Pitch 덱 에디터
 - [Gleam](days/2026-09-20/pika.html) — Pika 스크린샷 에디터
 - [Flint](days/2026-09-20/raycast.html) — Raycast 커맨드 팔레트
 - [Sunday](days/2026-09-20/family.html) — Family 감성 월렛

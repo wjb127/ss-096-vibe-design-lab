@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grove</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0c0c0d; --ink:#f4f1ea; --mut:#8a8680; --line:#222; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    a.lab { position: fixed; top: 10px; left: 12px; z-index: 40; font-size: 11px; color: var(--mut); text-decoration: none; }
+    header {
+      padding: 28px 28px 12px;
+      display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    h1 { font-family: Newsreader, serif; font-size: 32px; font-weight: 400; letter-spacing: -0.03em; margin: 0; }
+    .sub { color: var(--mut); font-size: 13px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 28px 18px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 32px; padding: 0 12px 0 8px; border-radius: 99px;
+      border: 1px solid #2a2a2c; background: transparent; color: #ddd; cursor: pointer; font: inherit; font-size: 12px;
+    }
+    .chip.on { border-color: #fff; color: #fff; }
+    .chip i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+    .masonry { columns: 4; column-gap: 10px; padding: 0 28px 80px; }
+    @media (max-width: 1100px) { .masonry { columns: 3; } }
+    @media (max-width: 720px) { .masonry { columns: 2; padding: 0 12px 80px; } }
+    .tile {
+      break-inside: avoid; margin-bottom: 10px; position: relative;
+      border-radius: 6px; overflow: hidden; cursor: pointer;
+    }
+    .tile .art { width: 100%; display: block; min-height: 140px; }
+    .tile .save {
+      position: absolute; top: 8px; right: 8px;
+      opacity: 0; height: 28px; padding: 0 10px; border: 0; border-radius: 99px;
+      background: #fff; color: #111; font: 500 11px Inter, sans-serif; cursor: pointer;
+    }
+    .tile:hover .save { opacity: 1; }
+    .tile .save.on { opacity: 1; background: #111; color: #fff; }
+    .sheet {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      display: none; justify-content: center; align-items: center; z-index: 30; padding: 24px;
+    }
+    .sheet.on { display: flex; }
+    .panel {
+      width: min(860px, 100%); background: #141414; border-radius: 12px; overflow: hidden;
+      display: grid; grid-template-columns: 1.3fr .9fr;
+    }
+    @media (max-width: 720px) { .panel { grid-template-columns: 1fr; } }
+    .panel .big { min-height: 360px; }
+    .meta { padding: 22px; }
+    .meta h2 { font-family: Newsreader, serif; font-size: 26px; font-weight: 400; margin: 0 0 8px; }
+    .meta p { color: var(--mut); font-size: 13px; margin: 0 0 16px; }
+    .col { display: flex; gap: 8px; flex-wrap: wrap; }
+    .col button {
+      height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #333;
+      background: #1c1c1c; color: #eee; cursor: pointer; font: inherit; font-size: 12px;
+    }
+    .toast {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #fff; color: #111; padding: 8px 14px; border-radius: 99px; font-size: 13px; display: none; z-index: 50;
+    }
+    .toast.on { display: block; }
+    .count { color: var(--mut); font-size: 12px; padding: 0 28px 8px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <header>
+    <div>
+      <h1>Grove</h1>
+      <div class="sub">이미지로 모으는 영감</div>
+    </div>
+    <div class="sub" id="savedN">저장 0</div>
+  </header>
+  <div class="chips" id="chips"></div>
+  <div class="count" id="count"></div>
+  <div class="masonry" id="grid"></div>
+  <div class="sheet" id="sheet"></div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const COLORS = [
+      { id: "all", name: "전체", hex: "#f4f1ea" },
+      { id: "ink", name: "잉크", hex: "#1d1f24" },
+      { id: "clay", name: "클레이", hex: "#c47a5a" },
+      { id: "sage", name: "세이지", hex: "#6f8f78" },
+      { id: "ochre", name: "오커", hex: "#d4a054" },
+      { id: "blush", name: "블러시", hex: "#d9a3a0" },
+      { id: "bone", name: "본", hex: "#e6dcc8" },
+    ];
+    const TITLES = ["Vitsoe wall","한옥 마루","야간 네온","거친 리넨","콘크리트 계단","온실","필름 초상","식기 정물","서체 시안","바다 안개","나무 결","붉은 소파","그림자 창","도자 굽","야생화","철제 선반","새벽 부엌","대리석 결","오래된 책","노란 조명","골목 간판","연못","작업실 코너","흰 셔츠","이끼","곡면 의자","창가 먼지","흑백 손","지붕 기와","유리 벽돌","저녁 식탁","연필 스케치"];
+    const COLS = ["ink","clay","sage","ochre","blush","bone"];
+    const H = [180, 220, 260, 300, 340, 200, 280];
+    const ITEMS = TITLES.map((t, i) => {
+      const color = COLS[i % COLS.length];
+      const hex = COLORS.find((c) => c.id === color).hex;
+      const h = H[i % H.length];
+      const art = `linear-gradient(${(i * 37) % 160}deg, ${hex} 0%, ${i % 2 ? "#111" : "#f2ece4"} 100%)`;
+      return { id: i, t, color, hex, h, art, col: ["Interiors","Objects","Rooms","Type"][i % 4] };
+    });
+    let filter = "all", saved = new Set(), openId = null;
+
+    const toast = (m) => {
+      const el = document.getElementById("toast");
+      el.textContent = m; el.classList.add("on");
+      clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("on"), 1400);
+    };
+
+    function renderChips() {
+      document.getElementById("chips").innerHTML = COLORS.map((c) =>
+        `<button class="chip ${filter === c.id ? "on" : ""}" data-c="${c.id}"><i style="background:${c.hex}"></i>${c.name}</button>`
+      ).join("");
+    }
+    function list() { return ITEMS.filter((x) => filter === "all" || x.color === filter); }
+    function renderGrid() {
+      const rows = list();
+      document.getElementById("count").textContent = rows.length + " elements";
+      document.getElementById("grid").innerHTML = rows.map((x) => `
+        <div class="tile" data-id="${x.id}">
+          <div class="art" style="height:${x.h}px;background:${x.art}"></div>
+          <button class="save ${saved.has(x.id) ? "on" : ""}" data-save="${x.id}">${saved.has(x.id) ? "Saved" : "Save"}</button>
+        </div>`).join("");
+      document.getElementById("savedN").textContent = "저장 " + saved.size;
+    }
+    function openSheet(id) {
+      const x = ITEMS[id]; openId = id;
+      document.getElementById("sheet").className = "sheet on";
+      document.getElementById("sheet").innerHTML = `<div class="panel">
+        <div class="big" style="background:${x.art}"></div>
+        <div class="meta">
+          <h2>${x.t}</h2>
+          <p>${x.col} · ${COLORS.find(c=>c.id===x.color).name}</p>
+          <div class="col">
+            <button data-save="${x.id}">${saved.has(x.id) ? "Saved" : "Save"}</button>
+            <button data-col="Studio">Studio에 넣기</button>
+            <button data-col="Lookbook">Lookbook에 넣기</button>
+            <button id="close">닫기</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    function toggleSave(id) {
+      if (saved.has(id)) saved.delete(id); else saved.add(id);
+      toast(saved.has(id) ? "컬렉션에 넣었습니다" : "저장 해제");
+      renderGrid();
+      if (openId === id) openSheet(id);
+    }
+    document.getElementById("chips").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-c]"); if (!b) return;
+      filter = b.dataset.c; renderChips(); renderGrid();
+    });
+    document.getElementById("grid").addEventListener("click", (e) => {
+      const s = e.target.closest("[data-save]");
+      if (s) { e.stopPropagation(); toggleSave(+s.dataset.save); return; }
+      const t = e.target.closest(".tile"); if (t) openSheet(+t.dataset.id);
+    });
+    document.getElementById("sheet").addEventListener("click", (e) => {
+      if (e.target.id === "sheet" || e.target.id === "close") {
+        document.getElementById("sheet").className = "sheet"; openId = null; return;
+      }
+      const s = e.target.closest("[data-save]"); if (s) toggleSave(+s.dataset.save);
+      const c = e.target.closest("[data-col]");
+      if (c) toast(c.dataset.col + "에 넣었습니다");
+    });
+    renderChips(); renderGrid();
+  </script>
+</body>
+</html>
