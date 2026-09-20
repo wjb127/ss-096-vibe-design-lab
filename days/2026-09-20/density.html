@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko" data-density="comfortable">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>입고 대기열</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e8edf1;
+      --paper: #fff;
+      --ink: #13202c;
+      --mut: #5c6770;
+      --line: #d3dbe2;
+      --line-2: #e6ebef;
+      --accent: #0f766e;
+      --accent-soft: #d7efeb;
+      --warn: #b54708;
+      --warn-soft: #fde8d0;
+      --ok: #067647;
+      --ok-soft: #d8f3e2;
+      --hold: #6941c6;
+      --hold-soft: #ece6fa;
+      --danger: #b42318;
+      --hit: 24px;
+    }
+    [data-density="compact"] {
+      --space-100: 4px;
+      --space-200: 8px;
+      --space-300: 12px;
+      --type: 12px;
+      --type-sm: 11px;
+      --row: 32px;
+      --control-h: 24px;
+      --pad-x: 8px;
+      --head-h: 28px;
+      --title: 15px;
+      --bar-h: 40px;
+    }
+    [data-density="comfortable"] {
+      --space-100: 8px;
+      --space-200: 12px;
+      --space-300: 16px;
+      --type: 13px;
+      --type-sm: 12px;
+      --row: 40px;
+      --control-h: 32px;
+      --pad-x: 12px;
+      --head-h: 36px;
+      --title: 16px;
+      --bar-h: 48px;
+    }
+    [data-density="spacious"] {
+      --space-100: 12px;
+      --space-200: 16px;
+      --space-300: 24px;
+      --type: 14px;
+      --type-sm: 13px;
+      --row: 52px;
+      --control-h: 40px;
+      --pad-x: 16px;
+      --head-h: 44px;
+      --title: 18px;
+      --bar-h: 56px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: var(--type);
+      line-height: 1.35;
+    }
+    button, input { font: inherit; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--type-sm); }
+    a.lab {
+      position: fixed; top: 8px; left: 10px; z-index: 40;
+      font-size: 11px; color: var(--mut); text-decoration: none;
+    }
+    a.lab:hover { color: var(--ink); }
+    .app {
+      display: flex; flex-direction: column;
+      min-height: 100%;
+      padding-top: 22px;
+    }
+    .top {
+      display: flex; align-items: center; gap: var(--space-200);
+      height: var(--bar-h);
+      padding: 0 var(--space-300);
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      width: 22px; height: 22px; border-radius: 3px;
+      background: var(--accent); color: #fff;
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 600; flex: 0 0 auto;
+    }
+    h1 { font-size: var(--title); font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    .dc { color: var(--mut); font-size: var(--type-sm); }
+    .grow { flex: 1; }
+    .token {
+      font-size: 11px; color: var(--mut);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    .toolbar {
+      display: flex; align-items: center; gap: var(--space-100);
+      padding: var(--space-100) var(--space-300);
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+    .search {
+      height: var(--control-h);
+      min-height: var(--hit);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0 var(--pad-x);
+      width: min(280px, 100%);
+      background: #fbfcfd;
+    }
+    .search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .btn {
+      height: var(--control-h);
+      min-height: var(--hit);
+      min-width: var(--hit);
+      padding: 0 var(--pad-x);
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 4px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .btn:hover { background: #f4f7f8; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.primary:hover { filter: brightness(1.05); }
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-left: auto;
+    }
+    .seg button {
+      height: var(--control-h);
+      min-height: var(--hit);
+      min-width: 56px;
+      padding: 0 10px;
+      border: 0;
+      background: var(--paper);
+      color: var(--mut);
+      cursor: pointer;
+      border-right: 1px solid var(--line);
+    }
+    .seg button:last-child { border-right: 0; }
+    .seg button[aria-pressed="true"] {
+      background: #13202c; color: #fff;
+    }
+    .notice {
+      display: flex; align-items: flex-start; gap: 12px;
+      margin: var(--space-100) var(--space-300) 0;
+      padding: var(--space-100) var(--space-200);
+      background: var(--warn-soft);
+      color: #7a2e0b;
+      border: 1px solid #f5c9a0;
+      border-radius: 4px;
+      font-size: var(--type-sm);
+    }
+    .notice[hidden] { display: none !important; }
+    .notice button.link {
+      border: 0; background: none; color: #7a2e0b;
+      text-decoration: underline; cursor: pointer;
+      min-height: var(--hit); padding: 0 4px;
+      font: inherit;
+    }
+    .wrap {
+      margin: var(--space-100) var(--space-300) var(--space-300);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: auto;
+      max-height: calc(100vh - 170px);
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--type);
+    }
+    th, td {
+      height: var(--row);
+      padding: 0 var(--pad-x);
+      border-bottom: 1px solid var(--line-2);
+      text-align: left;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    th {
+      position: sticky; top: 0; z-index: 2;
+      height: var(--head-h);
+      background: #f7f9fb;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--mut);
+      letter-spacing: 0.02em;
+    }
+    tbody tr:hover td { background: #f6faf9; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .hit {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: var(--hit); min-height: var(--hit);
+    }
+    input[type="checkbox"] {
+      width: 14px; height: 14px; margin: 0;
+      accent-color: var(--accent);
+    }
+    .pill {
+      display: inline-flex; align-items: center;
+      height: calc(var(--control-h) - 10px);
+      min-height: 18px;
+      padding: 0 8px;
+      border-radius: 99px;
+      font-size: var(--type-sm);
+      font-weight: 500;
+    }
+    .st-검수 { background: var(--warn-soft); color: var(--warn); }
+    .st-입고 { background: var(--ok-soft); color: var(--ok); }
+    .st-보류 { background: var(--hold-soft); color: var(--hold); }
+    .st-대기 { background: #eef2f6; color: #3d4a54; }
+    .foot {
+      display: flex; justify-content: space-between;
+      padding: 8px var(--space-300) 16px;
+      color: var(--mut); font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand" aria-hidden="true">K</div>
+      <h1>입고 대기열</h1>
+      <span class="dc">김포 DC · 오늘</span>
+      <span class="grow"></span>
+      <span class="token" id="tokenReadout"></span>
+    </header>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="입고번호 · SKU · 상품" aria-label="검색" />
+      <button class="btn" type="button" id="reload">새로고침</button>
+      <button class="btn primary" type="button">검수 확정</button>
+      <div class="seg" role="radiogroup" aria-label="밀도">
+        <button type="button" data-mode="compact" aria-pressed="false">촘촘</button>
+        <button type="button" data-mode="comfortable" aria-pressed="true">보통</button>
+        <button type="button" data-mode="spacious" aria-pressed="false">여유</button>
+      </div>
+    </div>
+    <div class="notice" id="a11yNotice" hidden>
+      <div>촘촘 모드는 행과 글자가 작아집니다. 클릭 영역은 24px을 유지하지만 보이는 타깃은 권장 크기보다 작을 수 있어요. 기본값은 보통입니다.</div>
+      <button class="link" type="button" data-mode="comfortable">보통으로</button>
+    </div>
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px"><span class="hit"><input type="checkbox" id="all" aria-label="이 목록 선택" /></span></th>
+            <th>입고번호</th>
+            <th>SKU</th>
+            <th>상품</th>
+            <th class="num">수량</th>
+            <th>창고</th>
+            <th>로케이션</th>
+            <th>상태</th>
+            <th>예정</th>
+            <th>담당</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="foot">
+      <span id="count"></span>
+      <span>밀도는 간격·글자만 바꿈</span>
+    </div>
+  </div>
+  <script>
+    const KEY = "ss096.density";
+    const MODES = ["compact", "comfortable", "spacious"];
+    const TOKEN = {
+      compact: { space: 4, base: 20, row: 32, type: 12, label: "촘촘" },
+      comfortable: { space: 8, base: 28, row: 40, type: 13, label: "보통" },
+      spacious: { space: 12, base: 36, row: 52, type: 14, label: "여유" },
+    };
+    const ROWS = [
+      ["IN-24091","SKU-1182","냉동 만두 1kg",240,"김포","A-12","검수","09-20 14:00","박하은"],
+      ["IN-24092","SKU-3301","멸치액젓 1.8L",80,"김포","B-03","대기","09-20 15:30","이준"],
+      ["IN-24093","SKU-0904","유기농 두부 300g",420,"이천","C-21","입고","09-20 11:10","최민서"],
+      ["IN-24094","SKU-5510","흑임자 두유 190ml",960,"김포","A-07","검수","09-20 16:00","박하은"],
+      ["IN-24095","SKU-2208","쌀과자 50g",600,"양산","D-14","보류","09-21 09:00","정우"],
+      ["IN-24096","SKU-7712","김치 포기 3kg",120,"김포","E-02","대기","09-20 18:20","이준"],
+      ["IN-24097","SKU-4419","계란 30구",200,"이천","C-08","검수","09-20 13:40","한소이"],
+      ["IN-24098","SKU-1188","즉석밥 210g",1440,"김포","A-19","입고","09-20 10:05","박하은"],
+      ["IN-24099","SKU-6620","카스텔라 6입",90,"양산","D-01","대기","09-21 11:30","정우"],
+      ["IN-24100","SKU-8033","아메리카노 1L",240,"김포","B-11","검수","09-20 17:10","최민서"],
+      ["IN-24101","SKU-1290","고춧가루 1kg",64,"이천","C-30","보류","09-22 08:00","한소이"],
+      ["IN-24102","SKU-4502","생수 2L 6입",300,"김포","A-01","대기","09-20 19:00","이준"],
+      ["IN-24103","SKU-7781","닭가슴살 100g",720,"양산","D-22","검수","09-21 13:00","정우"],
+      ["IN-24104","SKU-3344","요거트 4입",180,"김포","B-18","입고","09-20 12:20","박하은"],
+      ["IN-24105","SKU-9011","라면 5입",540,"이천","C-04","대기","09-21 10:40","한소이"],
+      ["IN-24106","SKU-2107","올리브유 500ml",96,"김포","E-09","검수","09-20 15:00","최민서"],
+      ["IN-24107","SKU-5566","휴지 30롤",48,"양산","D-08","대기","09-21 16:20","정우"],
+      ["IN-24108","SKU-1002","바나나 1송이",220,"김포","A-16","입고","09-20 09:50","이준"],
+      ["IN-24109","SKU-8890","냉동 블루베리 400g",150,"이천","C-17","검수","09-20 14:50","한소이"],
+      ["IN-24110","SKU-6732","식빵 6쪽",110,"김포","B-06","보류","09-20 20:00","박하은"],
+    ];
+
+    function applyDensity(mode) {
+      if (!MODES.includes(mode)) mode = "comfortable";
+      document.documentElement.dataset.density = mode;
+      localStorage.setItem(KEY, mode);
+      document.querySelectorAll(".seg [data-mode]").forEach((btn) => {
+        btn.setAttribute("aria-pressed", btn.dataset.mode === mode ? "true" : "false");
+      });
+      document.getElementById("a11yNotice").hidden = mode !== "compact";
+      const t = TOKEN[mode];
+      document.getElementById("tokenReadout").textContent =
+        t.label + " · space " + t.space + " · base " + t.base + " · 행 " + t.row;
+    }
+
+    function render() {
+      const q = document.getElementById("q").value.trim().toLowerCase();
+      const rows = ROWS.filter((r) => !q || r.join(" ").toLowerCase().includes(q));
+      document.getElementById("tbody").innerHTML = rows.map((r) => `
+        <tr>
+          <td><span class="hit"><input type="checkbox" aria-label="${r[0]} 선택" /></span></td>
+          <td class="mono">${r[0]}</td>
+          <td class="mono">${r[1]}</td>
+          <td>${r[2]}</td>
+          <td class="num">${r[3].toLocaleString("ko-KR")}</td>
+          <td>${r[4]}</td>
+          <td class="mono">${r[5]}</td>
+          <td><span class="pill st-${r[6]}">${r[6]}</span></td>
+          <td class="mono">${r[7]}</td>
+          <td>${r[8]}</td>
+        </tr>
+      `).join("");
+      document.getElementById("count").textContent = rows.length + "건";
+    }
+
+    document.querySelectorAll("[data-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => applyDensity(btn.dataset.mode));
+    });
+    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("reload").addEventListener("click", () => {
+      document.getElementById("q").value = "";
+      render();
+    });
+    document.getElementById("all").addEventListener("change", (e) => {
+      document.querySelectorAll("#tbody input[type=checkbox]").forEach((c) => { c.checked = e.target.checked; });
+    });
+
+    applyDensity(localStorage.getItem(KEY) || "comfortable");
+    render();
+  </script>
+</body>
+</html>

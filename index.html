@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>vibe design lab</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b0b0c; --fg:#ededed; --mut:#8a8a8e; --line:#222; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.45;
+    }
+    main { max-width: 720px; margin: 0 auto; padding: 56px 24px 80px; }
+    h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .lede { color: var(--mut); font-size: 14px; margin: 0 0 40px; }
+    .day {
+      display: flex; justify-content: space-between; gap: 16px;
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+      text-decoration: none; color: inherit;
+    }
+    .day:last-child { border-bottom: 1px solid var(--line); }
+    .day strong { font-weight: 550; }
+    .day span { color: var(--mut); font-size: 13px; }
+    .empty { color: var(--mut); font-size: 14px; padding: 24px 0; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>vibe design lab</h1>
+    <p class="lede">매일 레퍼런스 하나 보고 한 화면. Grok이 리서치 → 여기다 쌓음.</p>
+    <a class="day" href="days/2026-09-20/density.html">
+      <strong>2026-09-20 · 밀도</strong>
+      <span>입고 대기열 — compact / comfortable / spacious</span>
+    </a>
+    <a class="day" href="days/2026-09-20/filters.html">
+      <strong>2026-09-20 · 필터</strong>
+      <span>출고 건 — 칩 · N of M · 정렬 방향 · 선택 범위</span>
+    </a>
+  </main>
+</body>
+</html>

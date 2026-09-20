@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko" data-density="comfortable">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>출고 건</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e8edf1;
+      --paper: #fff;
+      --ink: #13202c;
+      --mut: #5c6770;
+      --line: #d3dbe2;
+      --line-2: #e6ebef;
+      --accent: #0f766e;
+      --warn: #b54708;
+      --warn-soft: #fde8d0;
+      --ok: #067647;
+      --ok-soft: #d8f3e2;
+      --hold: #6941c6;
+      --hold-soft: #ece6fa;
+      --danger: #b42318;
+      --danger-soft: #fde4e1;
+      --chip: #e7f4f2;
+      --hit: 24px;
+      --space-100: 8px;
+      --space-200: 12px;
+      --space-300: 16px;
+      --type: 13px;
+      --type-sm: 12px;
+      --row: 40px;
+      --control-h: 32px;
+      --pad-x: 12px;
+      --head-h: 36px;
+      --frozen: 168px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: var(--type);
+    }
+    button, input, select { font: inherit; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: var(--type-sm); }
+    a.lab {
+      position: fixed; top: 8px; left: 10px; z-index: 50;
+      font-size: 11px; color: var(--mut); text-decoration: none;
+    }
+    a.lab:hover { color: var(--ink); }
+    .app { display: flex; flex-direction: column; min-height: 100%; padding-top: 22px; }
+    .top {
+      display: flex; align-items: center; gap: 12px;
+      height: 48px; padding: 0 16px;
+      background: var(--paper); border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      width: 22px; height: 22px; border-radius: 3px;
+      background: var(--accent); color: #fff;
+      display: grid; place-items: center; font-size: 11px; font-weight: 600;
+    }
+    h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    .grow { flex: 1; }
+    .mut { color: var(--mut); font-size: 12px; }
+    .toolbar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 10px 16px; background: var(--paper); border-bottom: 1px solid var(--line);
+    }
+    .search, select.ctrl {
+      height: var(--control-h); min-height: var(--hit);
+      border: 1px solid var(--line); border-radius: 4px;
+      padding: 0 10px; background: #fbfcfd;
+    }
+    .search { width: min(240px, 100%); }
+    .search:focus, select.ctrl:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .btn {
+      height: var(--control-h); min-height: var(--hit); min-width: var(--hit);
+      padding: 0 12px; border: 1px solid var(--line); background: var(--paper);
+      border-radius: 4px; cursor: pointer;
+    }
+    .btn:hover { background: #f4f7f8; }
+    .btn.ghost { border: 0; color: var(--accent); background: none; }
+    .btn.ghost:hover { background: var(--chip); }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .chips {
+      display: none;
+      align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 8px 16px;
+      background: #eef7f5;
+      border-bottom: 1px solid #cfe3df;
+    }
+    .chips.on { display: flex; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 24px; min-height: var(--hit);
+      padding: 0 4px 0 10px;
+      background: var(--paper);
+      border: 1px solid #b7d4ce;
+      border-radius: 99px;
+      font-size: 12px;
+    }
+    .chip button {
+      width: 24px; height: 24px; min-width: var(--hit); min-height: var(--hit);
+      border: 0; background: none; cursor: pointer; color: var(--mut);
+      border-radius: 99px;
+    }
+    .chip button:hover { background: #e7f0ee; color: var(--ink); }
+    .meta {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 8px 16px 0;
+      font-size: 12px; color: var(--mut);
+    }
+    .selbar {
+      display: none;
+      align-items: center; gap: 10px; flex-wrap: wrap;
+      margin: 8px 16px 0;
+      padding: 8px 12px;
+      background: #13202c; color: #fff;
+      border-radius: 4px; font-size: 12px;
+    }
+    .selbar.on { display: flex; }
+    .selbar button {
+      height: 24px; min-height: var(--hit); min-width: var(--hit);
+      padding: 0 8px; border-radius: 3px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff;
+    }
+    .selbar button.em { background: #fff; color: #13202c; border-color: #fff; }
+    .wrap {
+      margin: 8px 16px 12px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: auto;
+      max-height: calc(100vh - 250px);
+    }
+    table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td {
+      height: var(--row); padding: 0 var(--pad-x);
+      border-bottom: 1px solid var(--line-2);
+      text-align: left; white-space: nowrap; vertical-align: middle;
+      background: var(--paper);
+    }
+    th {
+      position: sticky; top: 0; z-index: 3;
+      height: var(--head-h);
+      background: #f7f9fb;
+      font-size: 11px; font-weight: 600; color: var(--mut);
+    }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--ink); }
+    .sort {
+      display: inline-flex; flex-direction: column; margin-left: 4px;
+      font-size: 8px; line-height: 1; color: #c0c8ce; vertical-align: middle;
+    }
+    th[aria-sort="ascending"] .sort .up,
+    th[aria-sort="descending"] .sort .dn { color: var(--accent); }
+    th[aria-sort="none"] .sort { opacity: .7; }
+    .frozen {
+      position: sticky; left: 36px; z-index: 2;
+      box-shadow: 1px 0 0 var(--line);
+    }
+    th.frozen { z-index: 4; left: 36px; }
+    .check { position: sticky; left: 0; z-index: 2; width: 36px; padding: 0; text-align: center; }
+    th.check { z-index: 4; }
+    .hit { display: inline-flex; align-items: center; justify-content: center; min-width: var(--hit); min-height: var(--hit); }
+    input[type="checkbox"] { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
+    tbody tr:hover td { background: #f6faf9; }
+    tbody tr.is-sel td { background: #eef7f5; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pill {
+      display: inline-flex; align-items: center;
+      height: 22px; padding: 0 8px; border-radius: 99px;
+      font-size: 12px; font-weight: 500;
+    }
+    .st-대기 { background: #eef2f6; color: #3d4a54; }
+    .st-피킹 { background: var(--warn-soft); color: var(--warn); }
+    .st-출고 { background: var(--ok-soft); color: var(--ok); }
+    .st-보류 { background: var(--hold-soft); color: var(--hold); }
+    .st-취소 { background: var(--danger-soft); color: var(--danger); }
+    .pager {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px 16px; gap: 8px; flex-wrap: wrap;
+      font-size: 12px; color: var(--mut);
+    }
+    .pager .pages { display: flex; gap: 4px; }
+    .empty {
+      padding: 40px 16px; text-align: center; color: var(--mut);
+    }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand" aria-hidden="true">K</div>
+      <h1>출고 건</h1>
+      <span class="mut">오늘 · 3DC</span>
+      <span class="grow"></span>
+      <span class="mut" id="clock"></span>
+    </header>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="운송장 · 주문 · 수취인" aria-label="검색" />
+      <select class="ctrl" id="fStatus" aria-label="상태">
+        <option value="">상태 전체</option>
+        <option>대기</option><option>피킹</option><option>출고</option><option>보류</option><option>취소</option>
+      </select>
+      <select class="ctrl" id="fWh" aria-label="창고">
+        <option value="">창고 전체</option>
+        <option>김포</option><option>이천</option><option>양산</option>
+      </select>
+      <select class="ctrl" id="fCarrier" aria-label="택배사">
+        <option value="">택배 전체</option>
+        <option>CJ대한통운</option><option>한진</option><option>롯데</option><option>오늘출발</option>
+      </select>
+      <span class="grow"></span>
+      <button class="btn" type="button" id="exportBtn">CSV</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="meta">
+      <span id="resultCount"></span>
+      <span id="sortHint"></span>
+    </div>
+    <div class="selbar" id="selbar"></div>
+    <div class="wrap" id="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="check"><span class="hit"><input type="checkbox" id="headCheck" aria-label="현재 페이지 선택" /></span></th>
+            <th class="frozen sortable" data-key="id" aria-sort="none">운송장 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="order" aria-sort="none">주문 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="name" aria-sort="none">수취인 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="wh" aria-sort="none">창고 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="carrier" aria-sort="none">택배사 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="status" aria-sort="none">상태 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="amount" aria-sort="none">금액 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+            <th class="sortable" data-key="date" aria-sort="none">출고일 <span class="sort" aria-hidden="true"><span class="up">▲</span><span class="dn">▼</span></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <span id="pageMeta"></span>
+      <div class="pages">
+        <button class="btn" type="button" id="prev">이전</button>
+        <button class="btn" type="button" id="next">다음</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const PAGE = 10;
+    const NAMES = ["김도윤","이서연","박지후","최하린","정우성","한소이","오세준","윤지아","장민재","서지훈","배아린","신태양"];
+    const WH = ["김포","이천","양산"];
+    const CARRIER = ["CJ대한통운","한진","롯데","오늘출발"];
+    const STATUS = ["대기","피킹","출고","보류","취소"];
+    const ALL = Array.from({ length: 64 }, (_, i) => {
+      const d = 20 - (i % 6);
+      return {
+        id: "TRK" + String(240000 + i).padStart(8, "0"),
+        order: "OD-9" + String(1800 + i),
+        name: NAMES[i % NAMES.length],
+        wh: WH[i % 3],
+        carrier: CARRIER[i % 4],
+        status: STATUS[i % 5],
+        amount: 12800 + (i * 1730) % 180000,
+        date: "09-" + String(d).padStart(2, "0"),
+      };
+    });
+
+    const state = {
+      q: "",
+      status: "",
+      wh: "",
+      carrier: "",
+      sortKey: "date",
+      sortDir: "desc",
+      page: 1,
+      selected: new Set(),
+      scope: "page",
+    };
+
+    function filtersOn() {
+      return Boolean(state.q || state.status || state.wh || state.carrier);
+    }
+
+    function queryAll() {
+      let rows = ALL.slice();
+      const q = state.q.trim().toLowerCase();
+      if (q) rows = rows.filter((r) => (r.id + r.order + r.name).toLowerCase().includes(q));
+      if (state.status) rows = rows.filter((r) => r.status === state.status);
+      if (state.wh) rows = rows.filter((r) => r.wh === state.wh);
+      if (state.carrier) rows = rows.filter((r) => r.carrier === state.carrier);
+      const dir = state.sortDir === "asc" ? 1 : -1;
+      rows.sort((a, b) => {
+        const va = a[state.sortKey];
+        const vb = b[state.sortKey];
+        if (typeof va === "number") return (va - vb) * dir;
+        return String(va).localeCompare(String(vb), "ko") * dir;
+      });
+      return rows;
+    }
+
+    function pageSlice(matched) {
+      const pages = Math.max(1, Math.ceil(matched.length / PAGE));
+      if (state.page > pages) state.page = pages;
+      const start = (state.page - 1) * PAGE;
+      return { pages, start, rows: matched.slice(start, start + PAGE) };
+    }
+
+    function money(n) { return n.toLocaleString("ko-KR") + "원"; }
+
+    function renderChips() {
+      const el = document.getElementById("chips");
+      const chips = [];
+      if (state.q) chips.push(["q", "검색: " + state.q]);
+      if (state.status) chips.push(["status", "상태: " + state.status]);
+      if (state.wh) chips.push(["wh", "창고: " + state.wh]);
+      if (state.carrier) chips.push(["carrier", "택배: " + state.carrier]);
+      el.classList.toggle("on", chips.length > 0);
+      if (!chips.length) { el.innerHTML = ""; return; }
+      el.innerHTML = chips.map(([k, label]) =>
+        `<span class="chip">${label}<button type="button" data-clear="${k}" aria-label="${label} 해제">×</button></span>`
+      ).join("") + `<button class="btn ghost" type="button" data-clear="all">전체 해제</button>`;
+    }
+
+    function renderSel(matched, pageRows) {
+      const bar = document.getElementById("selbar");
+      const n = state.selected.size;
+      if (!n) { bar.classList.remove("on"); bar.innerHTML = ""; return; }
+      bar.classList.add("on");
+      const matchN = matched.length;
+      const pageN = pageRows.length;
+      let scopeLabel = state.scope === "all"
+        ? "일치하는 전체 " + matchN + "건 선택됨"
+        : "현재 페이지 " + n + "건 선택됨";
+      const offerAll = state.scope === "page" && matchN > pageN;
+      bar.innerHTML =
+        `<span>${scopeLabel}</span>` +
+        (offerAll ? `<button class="em" type="button" id="selAllMatch">일치하는 전체 ${matchN}건 선택</button>` : "") +
+        (state.scope === "all" ? `<button type="button" id="selPageOnly">현재 페이지만</button>` : "") +
+        `<span class="grow"></span>` +
+        `<button type="button" id="bulkHold">보류</button>` +
+        `<button type="button" id="selClear">선택 해제</button>`;
+    }
+
+    function render() {
+      const matched = queryAll();
+      const { pages, start, rows } = pageSlice(matched);
+      if (state.scope === "page") {
+        const ids = new Set(rows.map((r) => r.id));
+        [...state.selected].forEach((id) => { if (!ids.has(id)) state.selected.delete(id); });
+      } else {
+        state.selected = new Set(matched.map((r) => r.id));
+      }
+
+      renderChips();
+      const filtered = filtersOn();
+      document.getElementById("resultCount").textContent = filtered
+        ? `전체 ${ALL.length}건 중 ${matched.length}건`
+        : `${ALL.length}건`;
+      const dirLabel = state.sortDir === "asc" ? "오름차순" : "내림차순";
+      const keyLabel = { id: "운송장", order: "주문", name: "수취인", wh: "창고", carrier: "택배사", status: "상태", amount: "금액", date: "출고일" }[state.sortKey];
+      document.getElementById("sortHint").textContent = keyLabel + " " + dirLabel;
+
+      document.querySelectorAll("th.sortable").forEach((th) => {
+        const on = th.dataset.key === state.sortKey;
+        th.setAttribute("aria-sort", on ? (state.sortDir === "asc" ? "ascending" : "descending") : "none");
+      });
+
+      const tbody = document.getElementById("tbody");
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="9"><div class="empty">조건에 맞는 출고 건이 없습니다.</div></td></tr>`;
+      } else {
+        tbody.innerHTML = rows.map((r) => {
+          const on = state.selected.has(r.id);
+          return `<tr class="${on ? "is-sel" : ""}" data-id="${r.id}">
+            <td class="check"><span class="hit"><input type="checkbox" ${on ? "checked" : ""} aria-label="${r.id} 선택" /></span></td>
+            <td class="frozen mono">${r.id}</td>
+            <td class="mono">${r.order}</td>
+            <td>${r.name}</td>
+            <td>${r.wh}</td>
+            <td>${r.carrier}</td>
+            <td><span class="pill st-${r.status}">${r.status}</span></td>
+            <td class="num">${money(r.amount)}</td>
+            <td class="mono">${r.date}</td>
+          </tr>`;
+        }).join("");
+      }
+
+      const head = document.getElementById("headCheck");
+      const pageSelected = rows.length && rows.every((r) => state.selected.has(r.id));
+      head.checked = pageSelected;
+      head.indeterminate = !pageSelected && rows.some((r) => state.selected.has(r.id));
+      head.title = "현재 페이지만 선택합니다. 일치하는 전체는 아래 막대에서.";
+
+      renderSel(matched, rows);
+      const from = matched.length ? start + 1 : 0;
+      const to = start + rows.length;
+      document.getElementById("pageMeta").textContent =
+        `이 페이지 ${from}–${to} · ${state.page}/${pages}페이지 · 정렬·필터는 전체 일치 건 기준`;
+      document.getElementById("prev").disabled = state.page <= 1;
+      document.getElementById("next").disabled = state.page >= pages;
+    }
+
+    function clearFilter(which) {
+      if (which === "all") {
+        state.q = state.status = state.wh = state.carrier = "";
+        document.getElementById("q").value = "";
+        document.getElementById("fStatus").value = "";
+        document.getElementById("fWh").value = "";
+        document.getElementById("fCarrier").value = "";
+      } else if (which === "q") {
+        state.q = ""; document.getElementById("q").value = "";
+      } else if (which === "status") {
+        state.status = ""; document.getElementById("fStatus").value = "";
+      } else if (which === "wh") {
+        state.wh = ""; document.getElementById("fWh").value = "";
+      } else if (which === "carrier") {
+        state.carrier = ""; document.getElementById("fCarrier").value = "";
+      }
+      state.page = 1;
+      state.scope = "page";
+      state.selected.clear();
+      render();
+    }
+
+    document.getElementById("q").addEventListener("input", (e) => {
+      state.q = e.target.value; state.page = 1; state.scope = "page"; state.selected.clear(); render();
+    });
+    document.getElementById("fStatus").addEventListener("change", (e) => {
+      state.status = e.target.value; state.page = 1; state.scope = "page"; state.selected.clear(); render();
+    });
+    document.getElementById("fWh").addEventListener("change", (e) => {
+      state.wh = e.target.value; state.page = 1; state.scope = "page"; state.selected.clear(); render();
+    });
+    document.getElementById("fCarrier").addEventListener("change", (e) => {
+      state.carrier = e.target.value; state.page = 1; state.scope = "page"; state.selected.clear(); render();
+    });
+    document.getElementById("chips").addEventListener("click", (e) => {
+      const t = e.target.closest("[data-clear]");
+      if (t) clearFilter(t.dataset.clear);
+    });
+    document.querySelectorAll("th.sortable").forEach((th) => {
+      th.addEventListener("click", () => {
+        if (state.sortKey === th.dataset.key) {
+          state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+        } else {
+          state.sortKey = th.dataset.key;
+          state.sortDir = "asc";
+        }
+        state.page = 1;
+        render();
+      });
+    });
+    document.getElementById("headCheck").addEventListener("change", (e) => {
+      const matched = queryAll();
+      const { rows } = pageSlice(matched);
+      state.scope = "page";
+      if (e.target.checked) rows.forEach((r) => state.selected.add(r.id));
+      else state.selected.clear();
+      render();
+    });
+    document.getElementById("tbody").addEventListener("change", (e) => {
+      const tr = e.target.closest("tr[data-id]");
+      if (!tr) return;
+      if (e.target.checked) state.selected.add(tr.dataset.id);
+      else {
+        state.selected.delete(tr.dataset.id);
+        state.scope = "page";
+      }
+      render();
+    });
+    document.getElementById("selbar").addEventListener("click", (e) => {
+      if (e.target.id === "selAllMatch") {
+        state.scope = "all";
+        render();
+      } else if (e.target.id === "selPageOnly") {
+        const { rows } = pageSlice(queryAll());
+        state.scope = "page";
+        state.selected = new Set(rows.map((r) => r.id));
+        render();
+      } else if (e.target.id === "selClear") {
+        state.scope = "page";
+        state.selected.clear();
+        render();
+      } else if (e.target.id === "bulkHold") {
+        const n = state.selected.size;
+        state.selected.clear();
+        state.scope = "page";
+        render();
+        alert(n + "건을 보류로 표시했습니다. (연습 화면)");
+      }
+    });
+    document.getElementById("prev").addEventListener("click", () => { state.page -= 1; render(); });
+    document.getElementById("next").addEventListener("click", () => { state.page += 1; render(); });
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const rows = queryAll();
+      const csv = ["운송장,주문,수취인,창고,택배사,상태,금액,출고일"]
+        .concat(rows.map((r) => [r.id, r.order, r.name, r.wh, r.carrier, r.status, r.amount, r.date].join(",")))
+        .join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "outbound.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    document.getElementById("clock").textContent = "정렬 기본: 출고일 내림차순";
+    render();
+  </script>
+</body>
+</html>

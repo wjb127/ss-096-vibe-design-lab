@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2026-09-20 — vibe design lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: light; --bg:#eef1f4; --ink:#13202c; --mut:#5c6770; --line:#d6dde3; --paper:#fff; --accent:#0f766e; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+    .lab { font-size: 12px; color: var(--mut); text-decoration: none; }
+    .lab:hover { color: var(--ink); }
+    h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; margin: 16px 0 6px; }
+    .lede { color: var(--mut); font-size: 14px; margin: 0 0 28px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    a.card {
+      display: block;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px 20px 18px;
+      text-decoration: none;
+      color: inherit;
+    }
+    a.card:hover { border-color: #9aa8b3; }
+    .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+    a.card h2 { font-size: 16px; font-weight: 600; margin: 8px 0 6px; }
+    a.card p { margin: 0; font-size: 13px; color: var(--mut); line-height: 1.45; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="lab" href="../../index.html">← vibe design lab</a>
+    <h1>2026-09-20</h1>
+    <p class="lede">밀도 모드 하나, 필터 진실 하나. 같은 콘솔 톤, 기법만 갈라짐.</p>
+    <div class="grid">
+      <a class="card" href="density.html">
+        <div class="k">density-mode-contract</div>
+        <h2>입고 대기열</h2>
+        <p>촘촘 / 보통 / 여유. 기본은 보통. 촘촘은 고지하고, 행만 줄인다.</p>
+      </a>
+      <a class="card" href="filters.html">
+        <div class="k">active-filter-truth</div>
+        <h2>출고 건</h2>
+        <p>칩, 전체 N건 중 M건, 정렬 화살표, 페이지 vs 일치 전체 선택.</p>
+      </a>
+    </div>
+  </main>
+</body>
+</html>
