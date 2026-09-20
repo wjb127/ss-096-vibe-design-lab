@@ -18,3 +18,21 @@
 
 ## 오늘 범위
 기법당 화면 하나. 프레임워크 없음.
+
+---
+
+# 아침 브리핑 — 설정 · progressive disclosure
+
+## 레퍼런스
+- 137Foundry — Settings that scale  
+  자주 쓰는 것만 먼저, Advanced로 긴꼬리, ~20개 넘으면 검색
+- Carbon — Disclosures  
+  https://carbondesignsystem.com/patterns/disclosures-pattern/  
+  사용자 개시, 한 번에 하나, 중첩 금지, 중요 정보 숨김 금지
+- 케이스: Zoom App settings — 빈도 재배치, Advanced, 결과/상태 라벨
+
+## 기법
+3. common-first-disclosure → `common.html`  
+   고빈도만 기본. 고급 한 겹. 그룹은 이름만. 입장용 카메라/마이크는 숨기지 않음. 20+면 검색(라벨·설명·동의어).
+4. risk-tiered-save → `save.html`  
+   저위험 자동저장 / 필드 인라인 / 구역 저장 / 긴 폼 스티키+이탈경고 / 위험 구역은 확인+결과 카피. 로딩·성공·실패·권한 잠금.

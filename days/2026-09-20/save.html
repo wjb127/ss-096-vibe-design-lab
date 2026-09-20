@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>한강 미팅 · 계정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e8edf1; --paper: #fff; --ink: #13202c; --mut: #5c6770;
+      --line: #d3dbe2; --line-2: #e6ebef; --accent: #0f766e;
+      --danger: #b42318; --danger-soft: #fde4e1; --ok: #067647;
+      --hit: 24px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg); color: var(--ink); font-size: 13px;
+    }
+    button, input, select, textarea { font: inherit; }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 50; font-size: 11px; color: var(--mut); text-decoration: none; }
+    a.lab:hover { color: var(--ink); }
+    .app { max-width: 760px; margin: 0 auto; padding: 28px 16px 96px; }
+    .top {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--paper); border: 1px solid var(--line);
+      border-radius: 8px 8px 0 0; padding: 14px 18px;
+    }
+    .brand { width: 22px; height: 22px; border-radius: 3px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+    h1 { font-size: 16px; font-weight: 600; margin: 0; }
+    .sub { color: var(--mut); font-size: 12px; margin: 2px 0 0; }
+    .panel { background: var(--paper); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; }
+    section { padding: 16px 18px 18px; border-top: 1px solid var(--line-2); }
+    section:first-child { border-top: 0; }
+    h2 { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+    .lede { color: var(--mut); font-size: 12px; margin: 0 0 12px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+    .row .meta { color: var(--mut); font-size: 12px; margin-top: 2px; }
+    .sw {
+      width: 40px; height: 24px; min-width: var(--hit); min-height: var(--hit);
+      border: 0; border-radius: 99px; background: #c5ced6; position: relative; cursor: pointer; padding: 0;
+    }
+    .sw[aria-checked="true"] { background: var(--accent); }
+    .sw i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; pointer-events: none; }
+    .sw[aria-checked="true"] i { left: 19px; }
+    .sw:disabled { opacity: .45; cursor: not-allowed; }
+    .fb { font-size: 12px; color: var(--ok); min-height: 16px; }
+    .fb.err { color: var(--danger); }
+    .fb.mut { color: var(--mut); }
+    label.fld { display: block; font-size: 12px; color: var(--mut); margin: 8px 0 4px; }
+    input.t, textarea.t, select.t {
+      width: 100%; min-height: var(--hit); border: 1px solid var(--line);
+      border-radius: 4px; padding: 8px 10px; background: #fbfcfd;
+    }
+    textarea.t { min-height: 72px; resize: vertical; }
+    input.t:focus, textarea.t:focus, select.t:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .inline { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start; }
+    .btn {
+      height: 32px; min-height: var(--hit); min-width: var(--hit);
+      padding: 0 12px; border: 1px solid var(--line); background: #fff;
+      border-radius: 4px; cursor: pointer;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .btn.ghost { background: transparent; }
+    .locked { font-size: 12px; color: #7a2e0b; background: #fde8d0; padding: 8px 10px; border-radius: 4px; margin-top: 8px; }
+    .danger-box { border: 1px solid #f0b4ad; background: var(--danger-soft); border-radius: 6px; padding: 12px; margin-top: 8px; }
+    .danger-box h3 { margin: 0 0 4px; font-size: 13px; color: var(--danger); }
+    .sticky {
+      display: none; position: sticky; bottom: 0;
+      background: #13202c; color: #fff;
+      padding: 10px 18px; gap: 10px; align-items: center;
+      border-radius: 0 0 8px 8px;
+    }
+    .sticky.on { display: flex; }
+    .sticky .btn.primary { background: #fff; color: #13202c; border-color: #fff; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 60;
+      background: #13202c; color: #fff; padding: 10px 14px; border-radius: 6px;
+      font-size: 13px; display: none;
+    }
+    .toast.on { display: block; }
+    dialog { border: 1px solid var(--line); border-radius: 8px; padding: 18px; max-width: 420px; width: calc(100% - 32px); }
+    dialog::backdrop { background: rgba(19,32,44,.45); }
+    dialog h3 { margin: 0 0 8px; }
+    dialog p { margin: 0 0 12px; color: var(--mut); font-size: 13px; }
+    .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand">한</div>
+      <div>
+        <h1>계정</h1>
+        <p class="sub">위험 낮은 건 바로 반영. 돌이키기 어려운 건 확인 후에.</p>
+      </div>
+    </header>
+    <div class="panel">
+      <section>
+        <h2>화면</h2>
+        <p class="lede">바로 적용됩니다. 따로 저장 버튼을 누르지 않아도 됩니다.</p>
+        <div class="row">
+          <div>
+            <div>어두운 화면</div>
+            <div class="meta">밤에 눈이 덜 부시게</div>
+          </div>
+          <div>
+            <button class="sw" id="theme" type="button" role="switch" aria-checked="false" aria-label="어두운 화면"><i></i></button>
+            <div class="fb" id="themeFb"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <div>글자 크게</div>
+            <div class="meta">메뉴가 14에서 16으로</div>
+          </div>
+          <button class="sw" id="bigType" type="button" role="switch" aria-checked="false" aria-label="글자 크게"><i></i></button>
+        </div>
+        <div class="row">
+          <div>
+            <div>뒤가 보이게 두지 않기</div>
+            <div class="meta">배경 흐림</div>
+          </div>
+          <button class="sw" id="blur" type="button" role="switch" aria-checked="true" aria-label="배경 흐림" disabled><i></i></button>
+        </div>
+        <div class="locked">조직에서 잠근 설정이라 바꿀 수 없습니다. 사유: 보안 정책 · 회의 배경 고정.</div>
+      </section>
+
+      <section>
+        <h2>이름</h2>
+        <p class="lede">이 칸만 따로 저장합니다.</p>
+        <label class="fld" for="displayName">참가자 목록에 보이는 이름</label>
+        <div class="inline">
+          <input class="t" id="displayName" value="위승빈" />
+          <button class="btn primary" type="button" id="saveName">저장</button>
+        </div>
+        <div class="fb mut" id="nameFb">저장하지 않으면 회의에 반영되지 않습니다.</div>
+      </section>
+
+      <section>
+        <h2>알림</h2>
+        <p class="lede">서로 묶인 값이라 이 구역을 한 번에 저장합니다.</p>
+        <div class="row">
+          <div>누가 들어오면 소리</div>
+          <button class="sw" id="nJoin" type="button" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="row">
+          <div>채팅이 오면 배지</div>
+          <button class="sw" id="nChat" type="button" role="switch" aria-checked="true"><i></i></button>
+        </div>
+        <div class="row">
+          <div>내가 말할 때 끄지 않기</div>
+          <button class="sw" id="nMute" type="button" role="switch" aria-checked="false"><i></i></button>
+        </div>
+        <label class="fld" for="nWhen">알림을 받을 때</label>
+        <select class="t" id="nWhen">
+          <option>회의 중일 때만</option>
+          <option>항상</option>
+          <option>보내지 않기</option>
+        </select>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn primary" type="button" id="saveNotif">이 구역 저장</button>
+          <span class="fb mut" id="notifFb">아직 저장 안 함</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>프로필</h2>
+        <p class="lede">여러 칸이 섞여 있어서 아래 막대에서 한 번에 저장합니다. 저장 전에 나가면 물어봅니다.</p>
+        <label class="fld" for="title">직함</label>
+        <input class="t dirty-profile" id="title" value="운영" />
+        <label class="fld" for="team">팀</label>
+        <input class="t dirty-profile" id="team" value="김포 DC" />
+        <label class="fld" for="bio">회의에 붙는 한 줄</label>
+        <textarea class="t dirty-profile" id="bio">입고·출고 이슈 있을 때 불러 주세요.</textarea>
+        <div class="fb mut" id="profileFb">변경 없음</div>
+      </section>
+
+      <section>
+        <h2>위험 구역</h2>
+        <p class="lede">바로 저장되지 않습니다. 결과를 읽고 확인한 뒤에만 실행됩니다.</p>
+        <div class="danger-box">
+          <h3>2단계 인증 끄기</h3>
+          <p class="lede" style="margin:0 0 10px">끄면 비밀번호만으로 로그인됩니다. 새 기기 알림이 30일간 오지 않습니다.</p>
+          <button class="btn" type="button" id="mfaOff">끄기…</button>
+        </div>
+        <div class="danger-box" style="margin-top:10px">
+          <h3>계정 삭제</h3>
+          <p class="lede" style="margin:0 0 10px">회의 기록, 녹음, 채팅이 즉시 지워지고 되돌릴 수 없습니다.</p>
+          <button class="btn danger" type="button" id="delAcc">계정 삭제…</button>
+        </div>
+      </section>
+
+      <div class="sticky" id="sticky">
+        <span id="stickyMsg">프로필이 저장되지 않았습니다</span>
+        <span style="flex:1"></span>
+        <button class="btn ghost" type="button" id="discard" style="color:#fff;border-color:rgba(255,255,255,.3)">되돌리기</button>
+        <button class="btn primary" type="button" id="saveProfile">프로필 저장</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <dialog id="dlg">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgBody"></p>
+    <label class="fld" for="dlgConfirm" id="dlgLab"></label>
+    <input class="t" id="dlgConfirm" />
+    <div class="actions">
+      <button class="btn" type="button" id="dlgCancel">취소</button>
+      <button class="btn danger" type="button" id="dlgOk">확인</button>
+    </div>
+  </dialog>
+  <script>
+    const toast = (msg, err) => {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.style.background = err ? "#b42318" : "#13202c";
+      el.classList.add("on");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("on"), 1800);
+    };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    document.querySelectorAll(".sw:not(:disabled)").forEach((sw) => {
+      sw.addEventListener("click", async () => {
+        if (sw.id === "nJoin" || sw.id === "nChat" || sw.id === "nMute") {
+          sw.setAttribute("aria-checked", sw.getAttribute("aria-checked") !== "true");
+          document.getElementById("notifFb").textContent = "저장되지 않은 변경";
+          document.getElementById("notifFb").className = "fb";
+          return;
+        }
+        const next = sw.getAttribute("aria-checked") !== "true";
+        sw.disabled = true;
+        document.getElementById("themeFb").textContent = "적용 중…";
+        document.getElementById("themeFb").className = "fb mut";
+        await wait(280);
+        sw.setAttribute("aria-checked", next);
+        sw.disabled = false;
+        if (sw.id === "theme") {
+          document.documentElement.style.colorScheme = next ? "dark" : "light";
+          document.body.style.background = next ? "#1a2229" : "#e8edf1";
+          document.getElementById("themeFb").textContent = next ? "적용됨" : "해제됨";
+          document.getElementById("themeFb").className = "fb";
+        }
+        toast(next ? "바로 적용했습니다" : "되돌렸습니다");
+      });
+    });
+
+    const nameInput = document.getElementById("displayName");
+    const nameSaved = nameInput.value;
+    document.getElementById("saveName").addEventListener("click", async () => {
+      const fb = document.getElementById("nameFb");
+      const v = nameInput.value.trim();
+      if (!v) {
+        fb.textContent = "이름이 비어 있으면 참가자 목록에 빈칸으로 뜹니다. 다시 적어 주세요.";
+        fb.className = "fb err";
+        return;
+      }
+      const btn = document.getElementById("saveName");
+      btn.disabled = true; btn.textContent = "저장 중";
+      fb.textContent = "저장하는 중…"; fb.className = "fb mut";
+      await wait(500);
+      if (v.length === 1) {
+        btn.disabled = false; btn.textContent = "다시 시도";
+        fb.textContent = "서버가 거절했습니다. 두 글자 이상이어야 합니다.";
+        fb.className = "fb err";
+        return;
+      }
+      btn.disabled = false; btn.textContent = "저장";
+      fb.textContent = "참가자 목록에 “" + v + "”(으)로 보입니다.";
+      fb.className = "fb";
+      toast("이름을 저장했습니다");
+    });
+
+    document.getElementById("nWhen").addEventListener("change", () => {
+      document.getElementById("notifFb").textContent = "저장되지 않은 변경";
+      document.getElementById("notifFb").className = "fb";
+    });
+    document.getElementById("saveNotif").addEventListener("click", async () => {
+      const btn = document.getElementById("saveNotif");
+      const fb = document.getElementById("notifFb");
+      btn.disabled = true; btn.textContent = "저장 중";
+      fb.textContent = "적용하는 중…"; fb.className = "fb mut";
+      await wait(450);
+      btn.disabled = false; btn.textContent = "이 구역 저장";
+      fb.textContent = "알림 설정을 저장했습니다.";
+      fb.className = "fb";
+      toast("알림 구역 저장됨");
+    });
+
+    const profileOrig = { title: "운영", team: "김포 DC", bio: "입고·출고 이슈 있을 때 불러 주세요." };
+    function profileDirty() {
+      return document.getElementById("title").value !== profileOrig.title
+        || document.getElementById("team").value !== profileOrig.team
+        || document.getElementById("bio").value !== profileOrig.bio;
+    }
+    function syncSticky() {
+      const dirty = profileDirty();
+      document.getElementById("sticky").classList.toggle("on", dirty);
+      document.getElementById("profileFb").textContent = dirty ? "저장하지 않은 내용이 있습니다" : "변경 없음";
+      document.getElementById("profileFb").className = dirty ? "fb" : "fb mut";
+    }
+    document.querySelectorAll(".dirty-profile").forEach((el) => el.addEventListener("input", syncSticky));
+    document.getElementById("discard").addEventListener("click", () => {
+      document.getElementById("title").value = profileOrig.title;
+      document.getElementById("team").value = profileOrig.team;
+      document.getElementById("bio").value = profileOrig.bio;
+      syncSticky();
+    });
+    document.getElementById("saveProfile").addEventListener("click", async () => {
+      const btn = document.getElementById("saveProfile");
+      btn.disabled = true; btn.textContent = "저장 중";
+      document.getElementById("stickyMsg").textContent = "저장하는 중…";
+      await wait(500);
+      profileOrig.title = document.getElementById("title").value;
+      profileOrig.team = document.getElementById("team").value;
+      profileOrig.bio = document.getElementById("bio").value;
+      btn.disabled = false; btn.textContent = "프로필 저장";
+      document.getElementById("stickyMsg").textContent = "프로필이 저장되지 않았습니다";
+      syncSticky();
+      toast("프로필을 저장했습니다");
+    });
+    window.addEventListener("beforeunload", (e) => {
+      if (profileDirty()) { e.preventDefault(); e.returnValue = ""; }
+    });
+
+    const dlg = document.getElementById("dlg");
+    let pending = null;
+    function openDanger({ title, body, lab, expect, ok }) {
+      pending = { expect, ok };
+      document.getElementById("dlgTitle").textContent = title;
+      document.getElementById("dlgBody").textContent = body;
+      document.getElementById("dlgLab").textContent = lab;
+      document.getElementById("dlgConfirm").value = "";
+      dlg.showModal();
+      document.getElementById("dlgConfirm").focus();
+    }
+    document.getElementById("mfaOff").addEventListener("click", () => {
+      openDanger({
+        title: "2단계 인증을 끌까요?",
+        body: "다음부터 비밀번호만으로 들어올 수 있습니다. 도난된 비밀번호가 있으면 계정이 열립니다. 이 동작은 바로 저장되지 않고, 확인을 눌러야 적용됩니다.",
+        lab: "끄기를 입력하세요",
+        expect: "끄기",
+        ok: () => toast("2단계 인증을 껐습니다"),
+      });
+    });
+    document.getElementById("delAcc").addEventListener("click", () => {
+      openDanger({
+        title: "계정을 삭제할까요?",
+        body: "회의 기록·녹음·채팅이 즉시 사라집니다. 복구 기간이 없습니다.",
+        lab: "삭제를 입력하세요",
+        expect: "삭제",
+        ok: () => toast("삭제 요청을 접수했습니다", true),
+      });
+    });
+    document.getElementById("dlgCancel").addEventListener("click", () => dlg.close());
+    document.getElementById("dlgOk").addEventListener("click", () => {
+      const v = document.getElementById("dlgConfirm").value.trim();
+      if (!pending || v !== pending.expect) {
+        toast("확인 문구가 다릅니다", true);
+        return;
+      }
+      const fn = pending.ok;
+      pending = null;
+      dlg.close();
+      fn();
+    });
+  </script>
+</body>
+</html>

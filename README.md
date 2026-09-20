@@ -19,6 +19,8 @@ open index.html
 
 ## 1일차 (2026-09-20)
 
+- [미팅 설정](days/2026-09-20/common.html) — common-first-disclosure
+- [계정](days/2026-09-20/save.html) — risk-tiered-save
 - [입고 대기열](days/2026-09-20/density.html) — density-mode-contract
 - [출고 건](days/2026-09-20/filters.html) — active-filter-truth
 

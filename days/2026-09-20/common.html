@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>한강 미팅 · 설정</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #e8edf1; --paper: #fff; --ink: #13202c; --mut: #5c6770;
+      --line: #d3dbe2; --line-2: #e6ebef; --accent: #0f766e;
+      --hit: 24px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans KR", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg); color: var(--ink); font-size: 13px;
+    }
+    button, input, select { font: inherit; }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 40; font-size: 11px; color: var(--mut); text-decoration: none; }
+    a.lab:hover { color: var(--ink); }
+    .app { max-width: 760px; margin: 0 auto; padding: 28px 16px 80px; }
+    .top {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--paper); border: 1px solid var(--line);
+      border-radius: 8px 8px 0 0; padding: 14px 18px;
+    }
+    .brand { width: 22px; height: 22px; border-radius: 3px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+    h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+    .sub { color: var(--mut); font-size: 12px; margin: 2px 0 0; }
+    .panel { background: var(--paper); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 8px 8px; padding: 8px 0 18px; }
+    .search-wrap { display: none; padding: 8px 18px 10px; }
+    .search-wrap.on { display: block; }
+    .search {
+      width: 100%; height: 36px; min-height: var(--hit);
+      border: 1px solid var(--line); border-radius: 4px; padding: 0 12px; background: #fbfcfd;
+    }
+    .search:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .hint { color: var(--mut); font-size: 12px; padding: 0 18px 8px; }
+    .row {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 12px; align-items: center;
+      padding: 10px 18px; border-top: 1px solid var(--line-2);
+    }
+    .row.hidden { display: none; }
+    .label { font-weight: 500; }
+    .desc { color: var(--mut); font-size: 12px; margin-top: 2px; }
+    .freq { font-size: 11px; color: var(--mut); font-family: "IBM Plex Mono", ui-monospace, monospace; margin-top: 4px; }
+    .ctrl { display: flex; align-items: center; gap: 8px; justify-self: end; }
+    .sw {
+      width: 40px; height: 24px; min-width: var(--hit); min-height: var(--hit);
+      border: 0; border-radius: 99px; background: #c5ced6; position: relative; cursor: pointer; padding: 0;
+    }
+    .sw[aria-checked="true"] { background: var(--accent); }
+    .sw i { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: left .15s; pointer-events: none; }
+    .sw[aria-checked="true"] i { left: 19px; }
+    select.ctrl-sel {
+      height: 32px; min-height: var(--hit); min-width: 140px;
+      border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; background: #fff;
+    }
+    .help {
+      width: 24px; height: 24px; min-width: var(--hit); min-height: var(--hit);
+      border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--mut); cursor: pointer;
+    }
+    .help[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+    .pop {
+      display: none; grid-column: 1 / -1;
+      background: #f4f8f7; border: 1px solid #cfe3df; border-radius: 6px;
+      padding: 10px 12px; font-size: 12px; color: #234;
+      position: relative;
+    }
+    .pop.on { display: block; }
+    .pop .x {
+      position: absolute; top: 6px; right: 6px;
+      width: 24px; height: 24px; border: 0; background: none; cursor: pointer; color: var(--mut);
+    }
+    .group { padding: 16px 18px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+    .adv-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 8px 18px 0; padding: 10px 12px;
+      width: calc(100% - 36px);
+      border: 1px dashed #b7c4cc; border-radius: 6px;
+      background: #f7f9fb; cursor: pointer; text-align: left; color: var(--ink);
+    }
+    .adv-toggle[aria-expanded="true"] { border-style: solid; background: #eef7f5; }
+    .adv { display: none; }
+    .adv.on { display: block; }
+    .empty { padding: 24px 18px; color: var(--mut); }
+    .foot { padding: 12px 18px 0; color: var(--mut); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/20</a>
+  <div class="app">
+    <header class="top">
+      <div class="brand">한</div>
+      <div>
+        <h1>미팅 설정</h1>
+        <p class="sub">자주 바꾸는 것만 앞에. 나머지는 고급.</p>
+      </div>
+    </header>
+    <div class="panel">
+      <div class="search-wrap" id="searchWrap">
+        <input class="search" id="q" type="search" placeholder="설정 이름 · 설명 · 비슷한 말" aria-label="설정 검색" />
+      </div>
+      <div class="hint" id="hint">이번 달 실제로 바뀐 횟수 기준. 엔지니어 취향 아님.</div>
+      <div id="common"></div>
+      <button class="adv-toggle" type="button" id="advBtn" aria-expanded="false" aria-controls="advanced">
+        <span>
+          <strong id="advLabel">고급 설정 보기</strong>
+          <span class="desc" style="display:block;font-weight:400">원본 비율, 프록시, 로그처럼 잘 안 바꾸는 항목</span>
+        </span>
+        <span aria-hidden="true" id="advChev">▾</span>
+      </button>
+      <div class="adv" id="advanced" hidden></div>
+      <div class="empty" id="empty" hidden>맞는 설정이 없습니다.</div>
+      <div class="foot" id="foot"></div>
+    </div>
+  </div>
+  <script>
+    const COMMON = [
+      { id: "cam-join", label: "들어오면 카메라가 켜져 있어요", desc: "방에 들어갈 때 내 화면이 바로 보입니다.", freq: 41, type: "toggle", value: true, critical: true, syn: "카메라 입장 video camera join" },
+      { id: "mic-join", label: "들어오면 마이크가 꺼져 있어요", desc: "입장 직후엔 내 소리가 나가지 않습니다.", freq: 38, type: "toggle", value: true, critical: true, syn: "음소거 mute 마이크 입장" },
+      { id: "speaker", label: "소리 나갈 기기", desc: "상대 목소리가 여기서 납니다.", freq: 29, type: "select", value: "맥북 스피커", options: ["맥북 스피커", "에어팟", "외장 모니터"], critical: true, syn: "스피커 speaker 출력" },
+      { id: "camera", label: "내 화면 찍을 카메라", desc: "참가자에게 보이는 카메라입니다.", freq: 27, type: "select", value: "FaceTime HD", options: ["FaceTime HD", "로지텍 C920", "아이폰 연속성"], critical: true, syn: "카메라 camera 웹캠" },
+      { id: "blur", label: "뒤가 보이게 두지 않기", desc: "배경을 흐리게 해서 방이 덜 보입니다.", freq: 22, type: "toggle", value: true, syn: "배경 흐림 blur virtual" },
+      { id: "join-sound", label: "누가 들어오면 짧게 소리", desc: "새 참가자를 놓치지 않게 알립니다.", freq: 18, type: "toggle", value: false, syn: "알림 소리 입장 chime" },
+      { id: "lang", label: "메뉴 언어", desc: "버튼과 안내 문구 언어입니다.", freq: 9, type: "select", value: "한국어", options: ["한국어", "English", "日本語"], syn: "언어 language 로케일" },
+      { id: "share-audio", label: "화면 공유할 때 컴퓨터 소리도", desc: "영상·탭 소리가 상대에게 같이 갑니다.", freq: 8, type: "toggle", value: false, syn: "화면공유 오디오 share" },
+    ];
+    const ADVANCED = [
+      { group: "영상 엔진", id: "aspect", label: "화면을 찌그러지지 않게", desc: "보낸 비율 그대로 유지합니다.", type: "toggle", value: true, syn: "원본 비율 aspect" },
+      { group: "영상 엔진", id: "hd", label: "보낼 때 선명하게 (HD)", desc: "데이터가 더 나갑니다.", type: "toggle", value: false, syn: "hd 고화질" },
+      { group: "영상 엔진", id: "hw", label: "컴퓨터가 영상을 대신 처리", desc: "그래픽 칩이 맡아서 팬이 덜 돌 수 있습니다.", type: "toggle", value: true, syn: "하드웨어 가속 gpu" },
+      { group: "영상 엔진", id: "mirror", label: "미리보기를 거울처럼", desc: "나만 좌우가 바뀌어 보입니다.", type: "toggle", value: true, syn: "거울 mirror" },
+      { group: "영상 엔진", id: "beauty", label: "피부를 부드럽게", desc: "기본은 꺼 둡니다.", type: "toggle", value: false, syn: "뷰티 터치업" },
+      { group: "네트워크", id: "proxy", label: "회사 프록시 주소", desc: "비워 두면 직접 연결합니다.", type: "select", value: "사용 안 함", options: ["사용 안 함", "시스템 설정", "직접 입력"], syn: "proxy 프록시" },
+      { group: "네트워크", id: "udp", label: "UDP 포트 범위", desc: "방화벽이 막을 때만 바꿉니다.", type: "select", value: "자동", options: ["자동", "8801–8810", "사용자 지정"], syn: "udp 포트 port" },
+      { group: "네트워크", id: "roam", label: "와이파이 바뀌어도 회의 유지", desc: "이동 중에 끊김을 줄입니다.", type: "toggle", value: true, syn: "로밍 네트워크" },
+      { group: "네트워크", id: "bw", label: "쓸 수 있는 최대 속도", desc: "공유 회선에서만 제한하세요.", type: "select", value: "제한 없음", options: ["제한 없음", "1 Mbps", "2 Mbps"], syn: "대역폭 bandwidth" },
+      { group: "진단", id: "log", label: "문제 생길 때 남길 기록 양", desc: "지원에 보낼 로그 상세입니다.", type: "select", value: "보통", options: ["적게", "보통", "자세히"], syn: "로그 log debug" },
+      { group: "진단", id: "stats", label: "회의 중 숫자 겹쳐 보기", desc: "지연·손실을 화면 모서리에 띄웁니다.", type: "toggle", value: false, syn: "통계 overlay" },
+      { group: "진단", id: "dump", label: "문제 리포트 보내기", desc: "최근 로그를 지원 팀으로 보냅니다.", type: "select", value: "보내지 않음", options: ["보내지 않음", "지금 보내기"], syn: "덤프 crash report" },
+      { group: "진단", id: "aec", label: "내 스피커 소리가 마이크로 안 들어가게", desc: "에코 제거 강도입니다.", type: "select", value: "자동", options: ["약하게", "자동", "강하게"], syn: "에코 echo aec" },
+      { group: "진단", id: "ns", label: "키보드·에어컨 소리 줄이기", desc: "목소리 외 잡음을 깎습니다.", type: "toggle", value: true, syn: "노이즈 noise" },
+      { group: "진단", id: "agc", label: "목소리 크기 자동으로 맞추기", desc: "멀어져도 상대 음량이 유지됩니다.", type: "toggle", value: true, syn: "이득 agc" },
+      { group: "진단", id: "second-cam", label: "두 번째 카메라", desc: "칠판용. 거의 안 바꿉니다.", type: "select", value: "없음", options: ["없음", "USB 캠"], syn: "보조 카메라" },
+      { group: "진단", id: "vb-path", label: "가상 배경 파일 위치", desc: "직접 넣은 이미지 폴더입니다.", type: "select", value: "기본 폴더", options: ["기본 폴더", "사용자 지정"], syn: "가상배경 경로" },
+      { group: "진단", id: "ontop", label: "다른 창 위에 항상 두기", desc: "공유 중 컨트롤이 가려지지 않게.", type: "toggle", value: false, syn: "always on top" },
+      { group: "진단", id: "gpu-split", label: "영상 처리를 따로 프로세스", desc: "충돌이 나도 회의는 남습니다.", type: "toggle", value: true, syn: "gpu process" },
+      { group: "진단", id: "beta", label: "아직 실험 중인 기능 받기", desc: "불안정할 수 있습니다.", type: "toggle", value: false, syn: "베타 channel" },
+    ];
+
+    const state = { advanced: false, q: "", openHelp: null, values: {} };
+    [...COMMON, ...ADVANCED].forEach((s) => { state.values[s.id] = s.value; });
+
+    function match(s, q) {
+      if (!q) return true;
+      const blob = (s.label + " " + s.desc + " " + (s.syn || "")).toLowerCase();
+      return blob.includes(q);
+    }
+
+    function control(s) {
+      const v = state.values[s.id];
+      if (s.type === "toggle") {
+        return `<button class="sw" type="button" role="switch" aria-checked="${v}" data-id="${s.id}" aria-label="${s.label}"><i></i></button>`;
+      }
+      const opts = s.options.map((o) => `<option ${o === v ? "selected" : ""}>${o}</option>`).join("");
+      return `<select class="ctrl-sel" data-id="${s.id}" aria-label="${s.label}">${opts}</select>`;
+    }
+
+    function rowHtml(s) {
+      const helpOn = state.openHelp === s.id;
+      return `<div class="row" data-row="${s.id}">
+        <div>
+          <div class="label">${s.label}</div>
+          <div class="desc">${s.desc}</div>
+          ${s.freq ? `<div class="freq">이번 달 ${s.freq}회 변경</div>` : ""}
+        </div>
+        <div class="ctrl">
+          <button class="help" type="button" aria-expanded="${helpOn}" aria-controls="help-${s.id}" data-help="${s.id}" title="설명">?</button>
+          ${control(s)}
+        </div>
+        <div class="pop ${helpOn ? "on" : ""}" id="help-${s.id}" ${helpOn ? "" : "hidden"}>
+          ${s.critical ? "이 항목은 입장에 바로 쓰여서 고급 안으로 넣지 않습니다. " : ""}${s.desc}
+          <button class="x" type="button" data-help-close="${s.id}" aria-label="닫기">×</button>
+        </div>
+      </div>`;
+    }
+
+    function render() {
+      const q = state.q.trim().toLowerCase();
+      const commonHits = COMMON.filter((s) => match(s, q));
+      const advHits = ADVANCED.filter((s) => match(s, q));
+      const searching = Boolean(q);
+      const showAdv = state.advanced || (searching && advHits.length);
+      const visibleCount = commonHits.length + (showAdv ? advHits.length : 0);
+      const showSearch = showAdv || searching || (COMMON.length + ADVANCED.length >= 20 && state.advanced);
+
+      document.getElementById("searchWrap").classList.toggle("on", showSearch);
+      document.getElementById("common").innerHTML = commonHits.map(rowHtml).join("");
+
+      const advEl = document.getElementById("advanced");
+      if (showAdv) {
+        let html = "";
+        let last = "";
+        advHits.forEach((s) => {
+          if (s.group !== last) { html += `<div class="group">${s.group}</div>`; last = s.group; }
+          html += rowHtml(s);
+        });
+        advEl.innerHTML = html || "";
+        advEl.classList.add("on");
+        advEl.hidden = false;
+      } else {
+        advEl.classList.remove("on");
+        advEl.hidden = true;
+        advEl.innerHTML = "";
+      }
+
+      document.getElementById("advBtn").hidden = searching && !advHits.length && !state.advanced;
+      document.getElementById("advBtn").setAttribute("aria-expanded", showAdv ? "true" : "false");
+      document.getElementById("advLabel").textContent = showAdv ? "고급 설정 숨기기" : "고급 설정 보기";
+      document.getElementById("advChev").textContent = showAdv ? "▴" : "▾";
+      document.getElementById("empty").hidden = visibleCount > 0;
+      document.getElementById("hint").textContent = searching
+        ? `검색 ${visibleCount}건 · 이름·설명·비슷한 말`
+        : (showAdv ? `보이는 항목 ${visibleCount}개 · 검색 켜짐` : "이번 달 실제로 바뀐 횟수 기준. 엔지니어 취향 아님.");
+      document.getElementById("foot").textContent = "고급은 한 겹. 그 안은 이름 붙은 묶음이지 다시 접지 않음.";
+    }
+
+    document.getElementById("advBtn").addEventListener("click", () => {
+      state.advanced = !state.advanced;
+      state.openHelp = null;
+      render();
+      if (state.advanced) document.getElementById("q").focus();
+    });
+    document.getElementById("q").addEventListener("input", (e) => {
+      state.q = e.target.value;
+      state.openHelp = null;
+      render();
+    });
+    document.querySelector(".panel").addEventListener("click", (e) => {
+      const help = e.target.closest("[data-help]");
+      if (help) {
+        const id = help.dataset.help;
+        state.openHelp = state.openHelp === id ? null : id;
+        render();
+        return;
+      }
+      if (e.target.closest("[data-help-close]")) {
+        state.openHelp = null;
+        render();
+        return;
+      }
+      const sw = e.target.closest(".sw");
+      if (sw) {
+        const on = sw.getAttribute("aria-checked") !== "true";
+        state.values[sw.dataset.id] = on;
+        sw.setAttribute("aria-checked", on);
+      }
+    });
+    document.querySelector(".panel").addEventListener("change", (e) => {
+      if (e.target.matches("select[data-id]")) state.values[e.target.dataset.id] = e.target.value;
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && state.openHelp) { state.openHelp = null; render(); }
+    });
+    render();
+  </script>
+</body>
+</html>
