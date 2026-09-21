@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Graphene</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #1a1c20; color: #ddd; }
+    a.lab { position: fixed; top: 8px; right: 10px; z-index: 20; font-size: 11px; color: #888; text-decoration: none; }
+    .app { display: grid; grid-template-columns: 48px 1fr 240px; grid-template-rows: 1fr 48px; height: 100%; }
+    .rail { background: #22252b; display: flex; flex-direction: column; padding: 8px 4px; gap: 4px; }
+    .rail button { height: 36px; border: 0; background: none; color: #ddd; cursor: pointer; border-radius: 6px; }
+    .rail button.on { background: #3a7afe; color: #fff; }
+    canvas { width: 100%; height: 100%; background: #2a2d34; }
+    .side { background: #22252b; border-left: 1px solid #111; padding: 10px; font-size: 12px; overflow: auto; }
+    .strip { grid-column: 1 / -1; background: #1e2127; border-top: 1px solid #111; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 12px; color: #9aa; }
+    label { display: block; margin: 8px 0 4px; color: #9aa; }
+    .ly { padding: 6px; background: #2a2d34; margin-bottom: 4px; display: flex; gap: 6px; align-items: center; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">랩</a>
+  <div class="app">
+    <div class="rail">
+      <button class="on" data-t="sel">S</button>
+      <button data-t="rect">R</button>
+      <button data-t="ell">O</button>
+    </div>
+    <canvas id="c"></canvas>
+    <aside class="side">
+      <div>Properties</div>
+      <label>Fill <input type="color" id="fill" value="#3a7afe" /></label>
+      <label>Stroke <input type="color" id="stroke" value="#ffffff" /></label>
+      <label>Width <input type="range" id="sw" min="0" max="12" value="2" /></label>
+      <label>Opacity <input type="range" id="op" min="0.1" max="1" step="0.05" value="1" /></label>
+      <div style="margin-top:12px">Layers</div>
+      <div id="layers"></div>
+    </aside>
+    <div class="strip" id="strip">node strip — 도형을 선택하세요 · ⌘Z undo</div>
+  </div>
+  <script>
+    const c = document.getElementById("c"), x = c.getContext("2d");
+    let tool = "sel", shapes = [], sel = null, drag = null, hist = [];
+    function resize() { c.width = c.clientWidth; c.height = c.clientHeight; draw(); }
+    addEventListener("resize", resize); setTimeout(resize, 0);
+    function snap() { hist.push(JSON.stringify(shapes)); if (hist.length>30) hist.shift(); }
+    function draw() {
+      x.clearRect(0,0,c.width,c.height);
+      shapes.forEach((s,i) => {
+        if (!s.vis) return;
+        x.globalAlpha = s.op; x.fillStyle = s.fill; x.strokeStyle = s.stroke; x.lineWidth = s.sw;
+        if (s.k === "ell") { x.beginPath(); x.ellipse(s.x+s.w/2,s.y+s.h/2,s.w/2,s.h/2,0,0,7); x.fill(); x.stroke(); }
+        else { x.fillRect(s.x,s.y,s.w,s.h); x.strokeRect(s.x,s.y,s.w,s.h); }
+        x.globalAlpha = 1;
+        if (sel===i) { x.strokeStyle="#fff"; x.strokeRect(s.x-2,s.y-2,s.w+4,s.h+4); }
+      });
+      document.getElementById("layers").innerHTML = shapes.map((s,i)=>`<div class="ly"><input type="checkbox" ${s.vis?"checked":""} data-v="${i}" /> ${s.k} ${i}
+        <button data-up="${i}">↑</button></div>`).join("");
+      const s = shapes[sel];
+      document.getElementById("strip").textContent = s ? `fill ${s.fill} · stroke ${s.sw}px · op ${s.op}` : "node strip — 도형을 선택하세요";
+    }
+    document.querySelector(".rail").onclick = (e) => {
+      const b = e.target.closest("[data-t]"); if (!b) return;
+      document.querySelectorAll("[data-t]").forEach(n=>n.classList.toggle("on",n===b)); tool = b.dataset.t;
+    };
+    c.onpointerdown = (e) => {
+      const r = c.getBoundingClientRect(); const p = { x:e.clientX-r.left, y:e.clientY-r.top };
+      if (tool==="sel") {
+        sel = null;
+        for (let i=shapes.length-1;i>=0;i--) {
+          const s=shapes[i]; if (p.x>=s.x&&p.x<=s.x+s.w&&p.y>=s.y&&p.y<=s.y+s.h) { sel=i; drag={x:p.x-s.x,y:p.y-s.y}; bind(); break; }
+        }
+      } else {
+        snap(); shapes.push({ k: tool==="ell"?"ell":"rect", x:p.x, y:p.y, w:120, h:80, fill:document.getElementById("fill").value, stroke:document.getElementById("stroke").value, sw:+document.getElementById("sw").value, op:+document.getElementById("op").value, vis:true });
+        sel = shapes.length-1;
+      }
+      draw();
+    };
+    c.onpointermove = (e) => {
+      if (sel==null||!drag) return;
+      const r = c.getBoundingClientRect();
+      shapes[sel].x = e.clientX-r.left-drag.x; shapes[sel].y = e.clientY-r.top-drag.y; draw();
+    };
+    c.onpointerup = () => drag=null;
+    function bind() {
+      const s = shapes[sel]; if (!s) return;
+      fill.value=s.fill; stroke.value=s.stroke; sw.value=s.sw; op.value=s.op;
+    }
+    ["fill","stroke","sw","op"].forEach((id) => document.getElementById(id).oninput = () => {
+      if (sel==null) return;
+      shapes[sel].fill=fill.value; shapes[sel].stroke=stroke.value; shapes[sel].sw=+sw.value; shapes[sel].op=+op.value; draw();
+    });
+    document.getElementById("layers").onclick = (e) => {
+      if (e.target.dataset.v!=null) { shapes[+e.target.dataset.v].vis=e.target.checked; draw(); }
+      if (e.target.dataset.up!=null) { const i=+e.target.dataset.up; if(i>0){ const [it]=shapes.splice(i,1); shapes.splice(i-1,0,it); sel=i-1; draw(); } }
+    };
+    addEventListener("keydown", (e) => { if((e.metaKey||e.ctrlKey)&&e.key==="z"&&hist.length){ shapes=JSON.parse(hist.pop()); sel=null; draw(); }});
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Peel</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #2b2b2b; color: #ddd; }
+    a.lab { position: fixed; top: 6px; right: 10px; z-index: 20; font-size: 11px; color: #888; text-decoration: none; }
+    .app { display: grid; grid-template-rows: 36px 32px 1fr; height: 100%; }
+    .menu, .opt { display: flex; align-items: center; gap: 10px; padding: 0 10px; background: #323232; border-bottom: 1px solid #1c1c1c; font-size: 12px; }
+    .work { display: grid; grid-template-columns: 48px 1fr 220px; min-height: 0; }
+    .rail { background: #3a3a3a; display: flex; flex-direction: column; padding: 6px 4px; gap: 4px; }
+    .rail button { height: 36px; border: 0; background: transparent; color: #ddd; cursor: pointer; border-radius: 4px; }
+    .rail button.on { background: #1e90ff; color: #fff; }
+    .stage { display: grid; place-items: center; background: #252525; overflow: auto; }
+    canvas { background: repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50%/16px 16px; }
+    .ph { color: #777; }
+    .layers { background: #323232; border-left: 1px solid #1c1c1c; padding: 8px; font-size: 12px; }
+    .ly { display: flex; align-items: center; gap: 6px; padding: 6px; background: #3c3c3c; margin-bottom: 4px; cursor: grab; }
+    .ly.on { outline: 1px solid #1e90ff; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">랩</a>
+  <div class="app">
+    <div class="menu">Peel · File · Edit · Layer</div>
+    <div class="opt" id="opt">Move — 레이어를 옮깁니다</div>
+    <div class="work">
+      <div class="rail" id="rail">
+        <button class="on" data-t="move" title="Move">M</button>
+        <button data-t="brush" title="Brush">B</button>
+        <button data-t="eraser" title="Eraser">E</button>
+        <button data-t="crop" title="Crop">C</button>
+        <button data-t="type" title="Type">T</button>
+      </div>
+      <div class="stage"><canvas id="c" width="520" height="360"></canvas></div>
+      <aside class="layers">
+        <div style="margin-bottom:8px">Layers <button type="button" id="add">+</button></div>
+        <div id="list"></div>
+        <label>Opacity <input type="range" id="op" min="0" max="1" step="0.05" value="1" /></label>
+      </aside>
+    </div>
+  </div>
+  <script>
+    const OPT = { move: "Move — 클릭해서 레이어 선택", brush: "Brush — 그리기", eraser: "Eraser — 지우기", crop: "Crop — 시안용 자리", type: "Type — 클릭해서 글자" };
+    let tool = "move", layers = [], cur = 0, hist = [], drawing = false;
+    const c = document.getElementById("c"), x = c.getContext("2d");
+    function layer(name) {
+      const cv = document.createElement("canvas"); cv.width = c.width; cv.height = c.height;
+      return { name, vis: true, op: 1, cv };
+    }
+    layers.push(layer("Background"));
+    const bg = layers[0].cv.getContext("2d"); bg.fillStyle = "#fff"; bg.fillRect(0,0,c.width,c.height);
+    function snap() { hist.push(layers.map((l) => l.cv.toDataURL())); if (hist.length>20) hist.shift(); }
+    function paint() {
+      x.clearRect(0,0,c.width,c.height);
+      layers.forEach((l) => { if (!l.vis) return; x.globalAlpha = l.op; x.drawImage(l.cv,0,0); x.globalAlpha = 1; });
+      document.getElementById("list").innerHTML = layers.map((l,i) =>
+        `<div class="ly ${i===cur?"on":""}" draggable="true" data-i="${i}">
+          <input type="checkbox" ${l.vis?"checked":""} data-v="${i}" /> ${l.name}</div>`).join("");
+    }
+    document.getElementById("rail").onclick = (e) => {
+      const b = e.target.closest("[data-t]"); if (!b) return;
+      document.querySelectorAll("[data-t]").forEach((n) => n.classList.toggle("on", n===b));
+      tool = b.dataset.t; document.getElementById("opt").textContent = OPT[tool];
+    };
+    document.getElementById("add").onclick = () => { layers.push(layer("Layer " + layers.length)); cur = layers.length-1; paint(); };
+    document.getElementById("list").onclick = (e) => {
+      if (e.target.dataset.v != null) { layers[+e.target.dataset.v].vis = e.target.checked; paint(); return; }
+      const ly = e.target.closest("[data-i]"); if (ly) { cur = +ly.dataset.i; document.getElementById("op").value = layers[cur].op; paint(); }
+    };
+    document.getElementById("list").ondragstart = (e) => { e.dataTransfer.setData("i", e.target.closest("[data-i]").dataset.i); };
+    document.getElementById("list").ondragover = (e) => e.preventDefault();
+    document.getElementById("list").ondrop = (e) => {
+      e.preventDefault();
+      const from = +e.dataTransfer.getData("i"); const to = +e.target.closest("[data-i]").dataset.i;
+      const [it] = layers.splice(from,1); layers.splice(to,0,it); cur = to; paint();
+    };
+    document.getElementById("op").oninput = (e) => { layers[cur].op = +e.target.value; paint(); };
+    c.onpointerdown = (e) => {
+      drawing = true; snap();
+      const r = c.getBoundingClientRect();
+      const px = (e.clientX-r.left)*c.width/r.width, py = (e.clientY-r.top)*c.height/r.height;
+      const g = layers[cur].cv.getContext("2d");
+      if (tool === "type") { g.fillStyle = "#111"; g.font = "22px sans-serif"; g.fillText("Type", px, py); paint(); }
+      if (tool === "brush" || tool === "eraser") { g.globalCompositeOperation = tool==="eraser"?"destination-out":"source-over"; g.fillStyle="#1e90ff"; g.beginPath(); g.arc(px,py,6,0,7); g.fill(); paint(); }
+    };
+    c.onpointermove = (e) => {
+      if (!drawing || (tool!=="brush" && tool!=="eraser")) return;
+      const r = c.getBoundingClientRect();
+      const px = (e.clientX-r.left)*c.width/r.width, py = (e.clientY-r.top)*c.height/r.height;
+      const g = layers[cur].cv.getContext("2d");
+      g.globalCompositeOperation = tool==="eraser"?"destination-out":"source-over";
+      g.fillStyle="#1e90ff"; g.beginPath(); g.arc(px,py,6,0,7); g.fill(); paint();
+    };
+    c.onpointerup = () => drawing = false;
+    addEventListener("keydown", (e) => {
+      if ((e.metaKey||e.ctrlKey) && e.key==="z" && hist.length) {
+        const last = hist.pop();
+        last.forEach((u,i) => { const im = new Image(); im.onload = () => { layers[i].cv.getContext("2d").clearRect(0,0,c.width,c.height); layers[i].cv.getContext("2d").drawImage(im,0,0); paint(); }; im.src = u; });
+      }
+    });
+    paint();
+  </script>
+</body>
+</html>

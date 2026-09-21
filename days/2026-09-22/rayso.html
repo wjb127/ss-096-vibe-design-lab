@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codeframe</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0e0f12; color: #eee; font-family: ui-sans-serif, system-ui, sans-serif; }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: #888; text-decoration: none; }
+    .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+    .side { padding: 48px 16px; border-right: 1px solid #222; }
+    label { display: block; font-size: 11px; color: #888; margin: 12px 0 6px; letter-spacing: .06em; text-transform: uppercase; }
+    textarea { width: 100%; height: 180px; background: #16171c; color: #eee; border: 1px solid #2a2a30; padding: 10px; font: 12px ui-monospace, Menlo, monospace; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chips button, .side button.pri, select { height: 30px; border-radius: 8px; border: 1px solid #333; background: #1c1d22; color: #ddd; cursor: pointer; }
+    .chips button.on { background: #fff; color: #111; }
+    .pri { width: 100%; margin-top: 16px; background: #fff !important; color: #111 !important; }
+    .stage { display: grid; place-items: center; padding: 40px 20px; }
+    .card { padding: var(--pad, 32px); border-radius: 18px; background: var(--grad); }
+    .mac { background: #1a1b1f; border-radius: 12px; overflow: hidden; min-width: 420px; box-shadow: 0 30px 80px #0008; }
+    .dots { height: 36px; display: flex; gap: 6px; align-items: center; padding: 0 12px; }
+    .dots i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+    pre { margin: 0; padding: 8px 16px 20px; font: 13px/1.55 ui-monospace, Menlo, monospace; color: #e8e6e3; }
+    .ln { color: #5c5f66; display: inline-block; width: 24px; }
+    .light .mac { background: #f6f5f2; }
+    .light pre { color: #222; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="app">
+    <aside class="side">
+      <div style="font-weight:600;margin-bottom:8px">Codeframe</div>
+      <label>Code</label>
+      <textarea id="code">function greet(name) {
+  return `hello, ${name}`
+}</textarea>
+      <label>Theme</label>
+      <div class="chips" id="themes"></div>
+      <label>Padding</label>
+      <input type="range" id="pad" min="16" max="64" value="32" style="width:100%" />
+      <label>Mode</label>
+      <div class="chips">
+        <button type="button" class="on" data-mode="dark">Dark</button>
+        <button type="button" data-mode="light">Light</button>
+      </div>
+      <label><input type="checkbox" id="ln" checked /> Line numbers</label>
+      <button class="pri" type="button" id="exp">Export PNG</button>
+    </aside>
+    <main class="stage" id="stage">
+      <div class="card" id="card">
+        <div class="mac">
+          <div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+          <pre id="pre"></pre>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    const THEMES = [
+      ["Candy", "linear-gradient(135deg,#ff7a59,#7b5cff 50%,#3ec7ff)"],
+      ["Midnight", "linear-gradient(135deg,#0f0c29,#302b63,#24243e)"],
+      ["Peach", "linear-gradient(160deg,#f6d365,#fda085)"],
+      ["Mint", "linear-gradient(135deg,#89f7fe,#66a6ff)"],
+    ];
+    const box = document.getElementById("themes");
+    THEMES.forEach((t, i) => {
+      const b = document.createElement("button");
+      b.textContent = t[0]; if (i === 0) b.className = "on";
+      b.onclick = () => { [...box.children].forEach(x => x.classList.remove("on")); b.classList.add("on"); document.getElementById("card").style.setProperty("--grad", t[1]); document.getElementById("card").style.background = t[1]; };
+      box.appendChild(b);
+    });
+    document.getElementById("card").style.background = THEMES[0][1];
+    function paint() {
+      const code = document.getElementById("code").value;
+      const ln = document.getElementById("ln").checked;
+      document.getElementById("pre").innerHTML = code.split("\n").map((l, i) =>
+        (ln ? `<span class="ln">${i+1}</span>` : "") + l.replace(/</g,"&lt;")
+      ).join("\n");
+    }
+    document.getElementById("code").oninput = paint;
+    document.getElementById("ln").oninput = paint;
+    document.getElementById("pad").oninput = (e) => document.getElementById("card").style.setProperty("--pad", e.target.value + "px");
+    document.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => {
+      document.querySelectorAll("[data-mode]").forEach((x) => x.classList.toggle("on", x === b));
+      document.getElementById("stage").classList.toggle("light", b.dataset.mode === "light");
+    });
+    document.getElementById("exp").onclick = async () => {
+      const el = document.getElementById("card");
+      const w = el.offsetWidth, h = el.offsetHeight;
+      const c = document.createElement("canvas"); c.width = w*2; c.height = h*2;
+      const x = c.getContext("2d"); x.scale(2,2);
+      x.fillStyle = getComputedStyle(el).backgroundImage.includes("linear") ? "#7b5cff" : "#222";
+      const bg = getComputedStyle(el).background;
+      x.fillStyle = "#222"; x.fillRect(0,0,w,h);
+      x.fillStyle = "#fff"; x.font = "12px monospace"; x.fillText("export from Codeframe", 16, 24);
+      x.fillText(document.getElementById("code").value.split("\n")[0], 16, 48);
+      const a = document.createElement("a"); a.download = "codeframe.png"; a.href = c.toDataURL(); a.click();
+    };
+    paint();
+  </script>
+</body>
+</html>

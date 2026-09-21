@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sill</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #111; color: #fff; }
+    a.lab { position: fixed; top: 10px; left: 12px; z-index: 20; font-size: 11px; color: #bbb; text-decoration: none; }
+    .view { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; background-size: cover; background-position: center; }
+    .view.on { opacity: 1; }
+    .bar {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 24px 28px 28px; background: linear-gradient(transparent, rgba(0,0,0,.45));
+      pointer-events: none;
+    }
+    .bar * { pointer-events: auto; }
+    h1 { font-weight: 500; font-size: 22px; margin: 0; letter-spacing: -0.03em; }
+    .who { font-size: 13px; opacity: .8; margin-top: 4px; }
+    .acts { display: flex; gap: 8px; }
+    button {
+      height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35);
+      background: rgba(0,0,0,.35); color: #fff; cursor: pointer; font: inherit;
+    }
+    .hint { position: fixed; top: 12px; right: 16px; font-size: 12px; opacity: .7; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="hint">N new · F full · M mute</div>
+  <div id="stage"></div>
+  <div class="bar">
+    <div>
+      <h1 id="place"></h1>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="acts">
+      <button type="button" id="mute">소리 끔</button>
+      <button type="button" id="full">전체화면</button>
+      <button type="button" id="next">New window</button>
+    </div>
+  </div>
+  <script>
+    const VIEWS = [
+      { place: "Reykjavík", who: "A. Sigurd", bg: "linear-gradient(#7aa7c9,#dfe8ef 40%,#c9b48a)" },
+      { place: "Kyoto rain", who: "M. Arai", bg: "linear-gradient(#4a5560,#8aa0a8 45%,#2f3a3c)" },
+      { place: "Lisbon noon", who: "R. Costa", bg: "linear-gradient(#f2c56b,#f7e3b0 40%,#c97a4a)" },
+      { place: "Oslo dusk", who: "S. Berg", bg: "linear-gradient(#2a3350,#6b5a7a 50%,#1a1c24)" },
+      { place: "Jeju wind", who: "한소이", bg: "linear-gradient(#9fd3c7,#e8f4ef 42%,#7aa88a)" },
+      { place: "Patagonia", who: "L. Mora", bg: "linear-gradient(#8bb8d4,#eef4f8 38%,#6a7f6a)" },
+    ];
+    let i = 0, muted = true, audio;
+    const stage = document.getElementById("stage");
+    VIEWS.forEach((v, n) => {
+      const d = document.createElement("div");
+      d.className = "view" + (n === 0 ? " on" : "");
+      d.style.background = v.bg;
+      stage.appendChild(d);
+    });
+    function show(n) {
+      i = (n + VIEWS.length) % VIEWS.length;
+      [...stage.children].forEach((el, k) => el.classList.toggle("on", k === i));
+      document.getElementById("place").textContent = VIEWS[i].place;
+      document.getElementById("who").textContent = "window by " + VIEWS[i].who;
+    }
+    function beep(on) {
+      if (muted || !on) { audio && audio.close(); audio = null; return; }
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audio = ctx;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 180;
+      g.gain.value = 0.015; o.connect(g); g.connect(ctx.destination); o.start();
+    }
+    document.getElementById("next").onclick = () => show(i + 1);
+    document.getElementById("full").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    document.getElementById("mute").onclick = () => {
+      muted = !muted;
+      document.getElementById("mute").textContent = muted ? "소리 끔" : "소리 켬";
+      beep(!muted);
+    };
+    document.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "n") show(i + 1);
+      if (k === "f") document.getElementById("full").click();
+      if (k === "m") document.getElementById("mute").click();
+    });
+    show(0);
+  </script>
+</body>
+</html>

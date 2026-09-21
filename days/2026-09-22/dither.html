@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bitfield</title>
+  <style>
+    :root { --bg:#111214; --panel:#1a1c20; --line:#2c2f36; --fg:#e8e8ea; --mut:#8b8e96; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: var(--mut); text-decoration: none; z-index: 2; }
+    .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .side { padding: 48px 16px 24px; border-right: 1px solid var(--line); background: var(--panel); }
+    label { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); margin: 14px 0 6px; }
+    select, input[type=range], button { width: 100%; font: inherit; }
+    select, button { height: 32px; background: #111; color: var(--fg); border: 1px solid var(--line); }
+    button.pri { background: #e8e8ea; color: #111; margin-top: 16px; cursor: pointer; }
+    .stage { display: grid; place-items: center; padding: 24px; }
+    .drop {
+      width: min(720px, 100%); min-height: 360px; border: 1px dashed var(--line);
+      display: grid; place-items: center; color: var(--mut); text-align: center; cursor: pointer;
+    }
+    canvas { max-width: 100%; image-rendering: pixelated; background: #000; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="app">
+    <aside class="side">
+      <div style="font-size:14px;margin-bottom:8px">BITFIELD</div>
+      <label>Algorithm</label>
+      <select id="algo"><option value="floyd">Floyd–Steinberg</option><option value="bayer">Bayer 4×4</option></select>
+      <label>Palette</label>
+      <select id="pal">
+        <option value="1bit">1-bit</option>
+        <option value="gb">Game Boy</option>
+        <option value="cga">CGA</option>
+      </select>
+      <label>Threshold <span id="thV">128</span></label>
+      <input type="range" id="th" min="0" max="255" value="128" />
+      <label>Pixel scale <span id="scV">2</span></label>
+      <input type="range" id="sc" min="1" max="8" value="2" />
+      <button class="pri" type="button" id="dl">Download PNG</button>
+    </aside>
+    <main class="stage">
+      <div class="drop" id="drop">이미지를 놓거나 클릭 · 데모도 됩니다<br><button type="button" id="demo" style="width:auto;margin-top:10px;padding:0 12px">데모</button></div>
+      <canvas id="c" hidden></canvas>
+      <input type="file" id="file" accept="image/*" hidden />
+    </main>
+  </div>
+  <script>
+    const PALS = {
+      "1bit": [[0,0,0],[255,255,255]],
+      gb: [[15,56,15],[48,98,48],[139,172,15],[155,188,15]],
+      cga: [[0,0,0],[255,85,255],[85,255,255],[255,255,255]],
+    };
+    const BAYER = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+    let src;
+    const c = document.getElementById("c"), ctx = c.getContext("2d");
+    function nearest(r,g,b, pal) {
+      let best = pal[0], d = 1e9;
+      pal.forEach((p) => { const x = (p[0]-r)**2+(p[1]-g)**2+(p[2]-b)**2; if (x < d) { d = x; best = p; } });
+      return best;
+    }
+    function render() {
+      if (!src) return;
+      const scale = +document.getElementById("sc").value;
+      const th = +document.getElementById("th").value;
+      const pal = PALS[document.getElementById("pal").value];
+      const w = Math.max(1, Math.floor(src.width / scale));
+      const h = Math.max(1, Math.floor(src.height / scale));
+      const tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h;
+      const t = tmp.getContext("2d");
+      t.drawImage(src, 0, 0, w, h);
+      const img = t.getImageData(0, 0, w, h), d = img.data;
+      const algo = document.getElementById("algo").value;
+      if (algo === "bayer") {
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const i = (y*w+x)*4;
+          const n = (BAYER[y%4][x%4] / 16 - 0.5) * 64;
+          const v = (d[i]+d[i+1]+d[i+2])/3 + n;
+          const p = v > th ? pal[pal.length-1] : pal[0];
+          if (pal.length > 2) { const q = nearest(d[i],d[i+1],d[i+2], pal); d[i]=q[0]; d[i+1]=q[1]; d[i+2]=q[2]; }
+          else { d[i]=p[0]; d[i+1]=p[1]; d[i+2]=p[2]; }
+        }
+      } else {
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+          const i = (y*w+x)*4;
+          const old = [d[i], d[i+1], d[i+2]];
+          const q = nearest(old[0], old[1], old[2], pal);
+          d[i]=q[0]; d[i+1]=q[1]; d[i+2]=q[2];
+          const err = [old[0]-q[0], old[1]-q[1], old[2]-q[2]];
+          const spread = (x,y,f) => {
+            if (x<0||y<0||x>=w||y>=h) return;
+            const j = (y*w+x)*4;
+            d[j]+=err[0]*f; d[j+1]+=err[1]*f; d[j+2]+=err[2]*f;
+          };
+          spread(x+1,y,7/16); spread(x-1,y+1,3/16); spread(x,y+1,5/16); spread(x+1,y+1,1/16);
+        }
+      }
+      t.putImageData(img, 0, 0);
+      c.width = w * 3; c.height = h * 3;
+      const o = c.getContext("2d"); o.imageSmoothingEnabled = false; o.drawImage(tmp, 0, 0, c.width, c.height);
+      c.hidden = false; document.getElementById("drop").hidden = true;
+    }
+    function load(url) {
+      const im = new Image(); im.crossOrigin = "anonymous";
+      im.onload = () => { src = im; render(); }; im.src = url;
+    }
+    function demo() {
+      const x = document.createElement("canvas"); x.width = 240; x.height = 160;
+      const g = x.getContext("2d");
+      const grd = g.createLinearGradient(0,0,240,160); grd.addColorStop(0,"#4aa"); grd.addColorStop(1,"#f84");
+      g.fillStyle = grd; g.fillRect(0,0,240,160);
+      g.fillStyle = "#fff"; g.beginPath(); g.arc(90,70,40,0,7); g.fill();
+      load(x.toDataURL());
+    }
+    ["algo","pal","th","sc"].forEach((id) => document.getElementById(id).oninput = () => {
+      document.getElementById("thV").textContent = document.getElementById("th").value;
+      document.getElementById("scV").textContent = document.getElementById("sc").value;
+      render();
+    });
+    document.getElementById("drop").onclick = () => document.getElementById("file").click();
+    document.getElementById("demo").onclick = (e) => { e.stopPropagation(); demo(); };
+    document.getElementById("file").onchange = (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = () => load(r.result); r.readAsDataURL(f);
+    };
+    document.getElementById("drop").ondragover = (e) => e.preventDefault();
+    document.getElementById("drop").ondrop = (e) => {
+      e.preventDefault(); const f = e.dataTransfer.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = () => load(r.result); r.readAsDataURL(f);
+    };
+    document.getElementById("dl").onclick = () => {
+      if (c.hidden) return;
+      const a = document.createElement("a"); a.href = c.toDataURL(); a.download = "bitfield.png"; a.click();
+    };
+  </script>
+</body>
+</html>

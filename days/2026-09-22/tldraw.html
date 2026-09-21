@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Draft</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #f8f8f7; color: #111; }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 20; font-size: 11px; color: #888; text-decoration: none; }
+    #board { position: absolute; inset: 0; cursor: crosshair; }
+    .rail {
+      position: fixed; left: 12px; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 4px; background: #fff;
+      border: 1px solid #e6e6e3; border-radius: 12px; padding: 6px; z-index: 10;
+      box-shadow: 0 8px 24px #0001;
+    }
+    .rail button, .bar button {
+      width: 36px; height: 36px; border: 0; background: none; border-radius: 8px; cursor: pointer;
+    }
+    .rail button.on, .bar button.on { background: #111; color: #fff; }
+    .bar {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 4px; background: #fff; border: 1px solid #e6e6e3; border-radius: 12px; padding: 4px 8px; z-index: 10;
+    }
+    .sel { position: absolute; border: 1.5px solid #2f80ff; pointer-events: none; }
+    .h { position: absolute; width: 8px; height: 8px; background: #fff; border: 1.5px solid #2f80ff; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="bar">
+    <input type="color" id="fill" value="#fff4c2" />
+    <button type="button" id="exp">PNG</button>
+    <button type="button" id="undo">Undo</button>
+  </div>
+  <div class="rail">
+    <button type="button" class="on" data-t="sel" title="Select">S</button>
+    <button type="button" data-t="note" title="Sticky">N</button>
+    <button type="button" data-t="rect" title="Rect">R</button>
+    <button type="button" data-t="ell" title="Ellipse">O</button>
+  </div>
+  <canvas id="board"></canvas>
+  <script>
+    const c = document.getElementById("board"), x = c.getContext("2d");
+    let tool = "sel", items = [], sel = null, drag = null, hist = [];
+    function resize() { c.width = innerWidth; c.height = innerHeight; draw(); }
+    addEventListener("resize", resize); resize();
+    function snap() { hist.push(JSON.stringify(items)); if (hist.length > 40) hist.shift(); }
+    function draw() {
+      x.clearRect(0,0,c.width,c.height);
+      x.fillStyle = "#f8f8f7"; x.fillRect(0,0,c.width,c.height);
+      items.forEach((it, i) => {
+        x.save();
+        x.translate(it.x + it.w/2, it.y + it.h/2); x.rotate((it.r||0)*Math.PI/180);
+        x.translate(-it.w/2, -it.h/2);
+        x.fillStyle = it.fill;
+        if (it.kind === "ell") { x.beginPath(); x.ellipse(it.w/2, it.h/2, it.w/2, it.h/2, 0, 0, 7); x.fill(); }
+        else { x.fillRect(0,0,it.w,it.h); x.strokeStyle = "#0001"; x.strokeRect(0,0,it.w,it.h); }
+        if (it.text) { x.fillStyle = "#222"; x.font = "14px ui-sans-serif"; x.fillText(it.text, 8, 22); }
+        x.restore();
+        if (sel === i) { x.strokeStyle = "#2f80ff"; x.strokeRect(it.x-1, it.y-1, it.w+2, it.h+2); }
+      });
+    }
+    document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => {
+      document.querySelectorAll("[data-t]").forEach((n) => n.classList.toggle("on", n === b));
+      tool = b.dataset.t;
+    });
+    c.onpointerdown = (e) => {
+      const p = { x: e.offsetX, y: e.offsetY };
+      if (tool === "sel") {
+        sel = null;
+        for (let i = items.length-1; i>=0; i--) {
+          const it = items[i];
+          if (p.x>=it.x && p.x<=it.x+it.w && p.y>=it.y && p.y<=it.y+it.h) { sel = i; drag = { x: p.x-it.x, y: p.y-it.y }; break; }
+        }
+      } else {
+        snap();
+        items.push({ kind: tool==="ell"?"ell":"rect", x: p.x, y: p.y, w: 140, h: tool==="note"?90:80, fill: tool==="note"?document.getElementById("fill").value:"#fff", text: tool==="note"?"note":"", r: 0 });
+        sel = items.length-1;
+      }
+      draw();
+    };
+    c.onpointermove = (e) => {
+      if (sel==null || !drag) return;
+      items[sel].x = e.offsetX - drag.x; items[sel].y = e.offsetY - drag.y; draw();
+    };
+    c.onpointerup = () => drag = null;
+    document.getElementById("undo").onclick = () => { if (!hist.length) return; items = JSON.parse(hist.pop()); sel=null; draw(); };
+    document.getElementById("exp").onclick = () => { const a=document.createElement("a"); a.href=c.toDataURL(); a.download="draft.png"; a.click(); };
+    addEventListener("keydown", (e) => {
+      if ((e.metaKey||e.ctrlKey) && e.key==="z") document.getElementById("undo").click();
+      if (e.key==="Backspace" && sel!=null) { snap(); items.splice(sel,1); sel=null; draw(); }
+    });
+  </script>
+</body>
+</html>

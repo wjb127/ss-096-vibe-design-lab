@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Meridian</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f4f1ea; color: #1b1916; font-family: "Iowan Old Style", Georgia, serif; }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: #888; text-decoration: none; font-family: ui-sans-serif, sans-serif; }
+    main { max-width: 920px; margin: 0 auto; padding: 56px 24px 80px; }
+    h1 { font-weight: 500; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .lede { color: #7a7368; font-size: 14px; margin: 0 0 24px; font-family: ui-sans-serif, sans-serif; }
+    .track { position: relative; height: 28px; background: #e7e1d6; border-radius: 4px; margin-bottom: 8px; cursor: ew-resize; }
+    .band { position: absolute; top: 0; bottom: 0; background: #cfe3c4; }
+    .cur { position: absolute; top: -6px; bottom: -6px; width: 2px; background: #2f6b3a; }
+    .row { display: grid; grid-template-columns: 140px 1fr 72px; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid #e4ddd2; font-family: ui-sans-serif, sans-serif; font-size: 14px; }
+    .time { font-variant-numeric: tabular-nums; text-align: right; }
+    .now { margin-top: 16px; height: 32px; padding: 0 12px; border: 1px solid #d6cfc4; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <main>
+    <h1>Meridian</h1>
+    <p class="lede">그린 스크러버를 끌면 모든 도시가 같이 움직입니다. ← → · Now</p>
+    <div id="rows"></div>
+    <button class="now" type="button" id="now">Now</button>
+  </main>
+  <script>
+    const CITIES = [
+      { n: "Honolulu", o: -10 }, { n: "Los Angeles", o: -7 }, { n: "New York", o: -4 },
+      { n: "São Paulo", o: -3 }, { n: "London", o: 1 }, { n: "Berlin", o: 2 },
+      { n: "Seoul", o: 9 }, { n: "Auckland", o: 12 },
+    ];
+    let t = Date.now();
+    const box = document.getElementById("rows");
+    function hourOf(offset) {
+      const d = new Date(t + offset * 3600000 - new Date().getTimezoneOffset() * 60000);
+      return { h: d.getUTCHours() + d.getUTCMinutes()/60, label: d.toISOString().slice(11,16) };
+    }
+    function paint() {
+      box.innerHTML = CITIES.map((c) => {
+        const { h, label } = hourOf(c.o);
+        const left = (h / 24) * 100;
+        const b0 = (9 / 24) * 100, b1 = (8 / 24) * 100;
+        return `<div class="row"><div>${c.n}</div>
+          <div class="track" data-tr>
+            <div class="band" style="left:${b0}%;width:${b1}%"></div>
+            <div class="cur" style="left:${left}%"></div>
+          </div>
+          <div class="time">${label}</div></div>`;
+      }).join("");
+    }
+    function setFromX(el, clientX) {
+      const r = el.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+      const h = p * 24;
+      const cur = hourOf(CITIES[0].o).h;
+      t += (h - cur) * 3600000;
+      paint();
+    }
+    box.addEventListener("pointerdown", (e) => {
+      const tr = e.target.closest("[data-tr]"); if (!tr) return;
+      const move = (ev) => setFromX(tr, ev.clientX);
+      setFromX(tr, e.clientX);
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
+    });
+    document.getElementById("now").onclick = () => { t = Date.now(); paint(); };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") { t -= 15 * 60000; paint(); }
+      if (e.key === "ArrowRight") { t += 15 * 60000; paint(); }
+    });
+    paint();
+  </script>
+</body>
+</html>

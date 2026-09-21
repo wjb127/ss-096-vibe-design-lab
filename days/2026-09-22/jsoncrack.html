@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nodejson</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; background: #111318; color: #e8e8ea; }
+    a.lab { position: fixed; top: 8px; left: 10px; z-index: 20; font-size: 11px; color: #888; text-decoration: none; }
+    .app { display: grid; grid-template-columns: 340px 1fr; height: 100%; }
+    textarea { width: 100%; height: 100%; background: #16181e; color: #d6e0ea; border: 0; padding: 48px 12px 12px; font: 12px/1.5 ui-monospace, Menlo, monospace; resize: none; }
+    .err { position: absolute; left: 12px; bottom: 12px; color: #f88; font-size: 12px; }
+    .pane { position: relative; overflow: hidden; }
+    svg { width: 100%; height: 100%; cursor: grab; }
+    .card { fill: #1c2028; stroke: #333; rx: 8; }
+    .card.on { stroke: #6cf; }
+    text { fill: #eee; font: 12px ui-sans-serif; }
+    .tools { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+    .tools button { height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #333; background: #1c2028; color: #eee; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="app">
+    <div class="pane"><textarea id="ed">{
+  "project": "vibe",
+  "stack": ["html", "css"],
+  "meta": { "year": 2026, "ok": true }
+}</textarea><div class="err" id="err"></div></div>
+    <div class="pane">
+      <div class="tools"><button type="button" id="fit">Fit</button><button type="button" id="png">PNG</button></div>
+      <svg id="svg"></svg>
+    </div>
+  </div>
+  <script>
+    let last = null, nodes = [], pan = { x: 40, y: 40, s: 1 }, drag = null, hi = null;
+    function walk(v, path, acc, x, y) {
+      const id = path.join(".") || "root";
+      const label = path.length ? String(path[path.length-1]) : "root";
+      acc.push({ id, label, x, y, path: path.slice(), extra: Array.isArray(v) ? `[${v.length}]` : (v && typeof v==="object" ? "{}" : JSON.stringify(v)) });
+      if (v && typeof v === "object") {
+        const keys = Object.keys(v);
+        keys.forEach((k, i) => walk(v[k], path.concat(k), acc, x + 180, y + (i - (keys.length-1)/2) * 70));
+      }
+    }
+    function edges(v, path, list) {
+      if (!v || typeof v !== "object") return;
+      Object.keys(v).forEach((k) => {
+        list.push({ a: path.join(".") || "root", b: path.concat(k).join(".") });
+        edges(v[k], path.concat(k), list);
+      });
+    }
+    function render(obj) {
+      last = obj; nodes = []; const ed = [];
+      walk(obj, [], nodes, 0, 200); edges(obj, [], ed);
+      const svg = document.getElementById("svg");
+      svg.innerHTML = `<g id="g" transform="translate(${pan.x},${pan.y}) scale(${pan.s})">
+        ${ed.map(e => { const A=nodes.find(n=>n.id===e.a), B=nodes.find(n=>n.id===e.b); if(!A||!B) return ""; return `<line x1="${A.x+70}" y1="${A.y+16}" x2="${B.x}" y2="${B.y+16}" stroke="#445" />`; }).join("")}
+        ${nodes.map(n => `<g data-id="${n.id}">
+          <rect class="card ${hi===n.id?"on":""}" x="${n.x}" y="${n.y}" width="140" height="32"/>
+          <text x="${n.x+8}" y="${n.y+20}">${n.label} ${n.extra||""}</text></g>`).join("")}
+      </g>`;
+    }
+    let t;
+    document.getElementById("ed").oninput = () => {
+      clearTimeout(t); t = setTimeout(() => {
+        try { render(JSON.parse(document.getElementById("ed").value)); document.getElementById("err").textContent = ""; }
+        catch { document.getElementById("err").textContent = "invalid JSON — last graph kept"; }
+      }, 200);
+    };
+    const svg = document.getElementById("svg");
+    svg.onpointerdown = (e) => {
+      const g = e.target.closest("[data-id]");
+      if (g) {
+        hi = g.dataset.id; render(last);
+        const ed = document.getElementById("ed");
+        const key = hi.split(".").pop();
+        const i = ed.value.indexOf('"'+key+'"');
+        if (i>=0) { ed.focus(); ed.setSelectionRange(i, i+key.length+2); }
+        return;
+      }
+      drag = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    };
+    svg.onpointermove = (e) => { if (!drag) return; pan.x = e.clientX - drag.x; pan.y = e.clientY - drag.y; render(last); };
+    svg.onpointerup = () => drag = null;
+    svg.onwheel = (e) => { e.preventDefault(); pan.s *= e.deltaY>0?0.9:1.1; render(last); };
+    document.getElementById("fit").onclick = () => { pan = { x: 40, y: 40, s: 1 }; render(last); };
+    document.getElementById("png").onclick = () => {
+      const xml = new XMLSerializer().serializeToString(svg);
+      const img = new Image();
+      img.onload = () => { const c=document.createElement("canvas"); c.width=svg.clientWidth; c.height=svg.clientHeight; c.getContext("2d").drawImage(img,0,0); const a=document.createElement("a"); a.href=c.toDataURL(); a.download="graph.png"; a.click(); };
+      img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+    };
+    render(JSON.parse(document.getElementById("ed").value));
+  </script>
+</body>
+</html>

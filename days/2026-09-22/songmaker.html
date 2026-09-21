@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gridtune</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f6f4; color: #243028; font-family: ui-sans-serif, system-ui, sans-serif; }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: #7a8; text-decoration: none; }
+    main { max-width: 860px; margin: 0 auto; padding: 48px 16px 80px; }
+    h1 { font-weight: 600; letter-spacing: -0.03em; }
+    .grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; margin: 16px 0; }
+    .cell { aspect-ratio: 1; border-radius: 6px; border: 0; background: #e4ece6; cursor: pointer; }
+    .cell.on { background: #3d8f6e; }
+    .cell.head { outline: 2px solid #1b5; }
+    .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    button { height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: #243028; color: #fff; cursor: pointer; }
+    .hint { color: #6a7; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <main>
+    <h1>Gridtune</h1>
+    <p class="hint" id="hint">칸을 눌러 음을 켜세요</p>
+    <div class="grid" id="grid"></div>
+    <div class="bar">
+      <button type="button" id="play">Play</button>
+      <label>Tempo <input type="range" id="tempo" min="60" max="180" value="110" /></label>
+      <select id="scale"><option value="maj">Major</option><option value="min">Minor</option></select>
+    </div>
+  </main>
+  <script>
+    const ROWS = 8, COLS = 16;
+    const MAJ = [0,2,4,5,7,9,11,12], MIN = [0,2,3,5,7,8,10,12];
+    const cells = Array.from({length: ROWS*COLS}, () => false);
+    const grid = document.getElementById("grid");
+    grid.innerHTML = cells.map((_,i) => `<button class="cell" aria-pressed="false" data-i="${i}"></button>`).join("");
+    grid.onclick = (e) => {
+      const b = e.target.closest("[data-i]"); if (!b) return;
+      const i = +b.dataset.i; cells[i] = !cells[i];
+      b.classList.toggle("on", cells[i]); b.setAttribute("aria-pressed", cells[i]);
+      document.getElementById("hint").textContent = cells.some(Boolean) ? "Play로 들어보세요" : "칸을 눌러 음을 켜세요";
+    };
+    let playing = false, col = 0, timer, ctx;
+    function beep(step) {
+      ctx ||= new (window.AudioContext||window.webkitAudioContext)();
+      const scale = document.getElementById("scale").value === "maj" ? MAJ : MIN;
+      for (let r = 0; r < ROWS; r++) {
+        if (!cells[r*COLS+step]) continue;
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 220 * Math.pow(2, scale[ROWS-1-r]/12);
+        g.gain.value = 0.06; o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.18);
+      }
+    }
+    function tick() {
+      document.querySelectorAll(".cell").forEach((el,i) => el.classList.toggle("head", i % COLS === col));
+      beep(col); col = (col+1)%COLS;
+    }
+    document.getElementById("play").onclick = () => {
+      playing = !playing;
+      document.getElementById("play").textContent = playing ? "Stop" : "Play";
+      clearInterval(timer);
+      if (playing) { col = 0; const bpm = +document.getElementById("tempo").value; timer = setInterval(tick, 60000/bpm/2); tick(); }
+      else document.querySelectorAll(".head").forEach((el) => el.classList.remove("head"));
+    };
+  </script>
+</body>
+</html>

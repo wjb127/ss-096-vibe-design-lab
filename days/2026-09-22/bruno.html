@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Joyride</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; font-family: ui-sans-serif, system-ui, sans-serif; background: #c8e4c4; }
+    a.lab { position: fixed; top: 10px; left: 12px; z-index: 20; font-size: 11px; color: #355; text-decoration: none; }
+    canvas { display: block; }
+    .hud { position: fixed; left: 16px; bottom: 16px; background: #fff9; padding: 8px 12px; border-radius: 10px; font-size: 13px; }
+    .map { position: fixed; right: 16px; bottom: 16px; width: 120px; height: 120px; background: #fff8; border-radius: 12px; overflow: hidden; }
+    .map i { position: absolute; width: 8px; height: 8px; background: #e85; border-radius: 50%; }
+    .card {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: min(360px, 90vw); background: #fffc; backdrop-filter: blur(16px);
+      border-radius: 16px; padding: 20px; display: none; z-index: 12;
+    }
+    .card.on { display: block; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="hud" id="hud">WASD 이동 · Enter 들어가기 · M 음소거</div>
+  <div class="map" id="map"></div>
+  <div class="card" id="card"><h2 id="ct"></h2><p id="cb"></p><button type="button" id="close">닫기</button></div>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.1/build/three.module.js"}}</script>
+  <script type="module">
+    import * as THREE from "three";
+    const scene = new THREE.Scene(); scene.background = new THREE.Color("#b7d6c2");
+    const cam = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 200);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight); document.body.prepend(renderer.domElement);
+    scene.add(new THREE.AmbientLight("#fff", 0.8));
+    const sun = new THREE.DirectionalLight("#fff", 0.8); sun.position.set(10,20,8); scene.add(sun);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(80,80), new THREE.MeshLambertMaterial({ color: "#8fbf7a" }));
+    ground.rotation.x = -Math.PI/2; scene.add(ground);
+    const car = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 2), new THREE.MeshLambertMaterial({ color: "#e85d3a" }));
+    car.position.y = 0.3; scene.add(car);
+    const marks = [
+      { n: "Studio", d: "작업실. 낮에는 여기서 코드를 씁니다.", x: 8, z: -6, c: "#7aa2ff" },
+      { n: "Cafe", d: "노란 차양. 커피가 너무 달다.", x: -10, z: 4, c: "#f2c14e" },
+      { n: "Park", d: "나무 아래 벤치.", x: 4, z: 12, c: "#3d6b5a" },
+    ];
+    marks.forEach((m) => {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshLambertMaterial({ color: m.c }));
+      b.position.set(m.x, 1, m.z); scene.add(b); m.mesh = b;
+    });
+    const keys = {};
+    addEventListener("keydown", (e) => { keys[e.key.toLowerCase()] = true; if (e.key === "Enter") enter(); if (e.key.toLowerCase()==="m") mute = !mute; });
+    addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+    let yaw = 0, mute = true, near = null;
+    function enter() {
+      if (!near) return;
+      document.getElementById("ct").textContent = near.n;
+      document.getElementById("cb").textContent = near.d;
+      document.getElementById("card").classList.add("on");
+    }
+    document.getElementById("close").onclick = () => document.getElementById("card").classList.remove("on");
+    function loop() {
+      const spd = 0.12;
+      if (keys["a"]) yaw += 0.04; if (keys["d"]) yaw -= 0.04;
+      if (keys["w"]) { car.position.x -= Math.sin(yaw)*spd; car.position.z -= Math.cos(yaw)*spd; }
+      if (keys["s"]) { car.position.x += Math.sin(yaw)*spd; car.position.z += Math.cos(yaw)*spd; }
+      car.rotation.y = yaw;
+      cam.position.set(car.position.x + Math.sin(yaw)*8, 5, car.position.z + Math.cos(yaw)*8);
+      cam.lookAt(car.position.x, 0.6, car.position.z);
+      near = marks.find((m) => Math.hypot(m.x-car.position.x, m.z-car.position.z) < 3) || null;
+      document.getElementById("hud").textContent = near ? `Enter → ${near.n}` : "WASD 이동 · Enter 들어가기";
+      const map = document.getElementById("map");
+      map.innerHTML = marks.map((m) => `<i style="left:${50+m.x}px;top:${50+m.z}px;background:${m.c}"></i>`).join("")
+        + `<i style="left:${50+car.position.x}px;top:${50+car.position.z}px;background:#111;width:10px;height:10px"></i>`;
+      renderer.render(scene, cam); requestAnimationFrame(loop);
+    }
+    loop();
+    addEventListener("resize", () => { cam.aspect = innerWidth/innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+  </script>
+</body>
+</html>

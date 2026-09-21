@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mixlab</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #efe8dc; color: #2a2118; font-family: ui-sans-serif, system-ui, sans-serif; }
+    a.lab { position: fixed; top: 10px; left: 12px; font-size: 11px; color: #8a7; text-decoration: none; }
+    .app { display: grid; grid-template-columns: 200px 1fr 220px; min-height: 100vh; }
+    .inv, .book { padding: 48px 12px 16px; background: #e7dccb; }
+    .chip { display: inline-flex; margin: 4px; padding: 8px 12px; background: #fff; border-radius: 999px; cursor: pointer; border: 1px solid #ddd0c0; min-height: 36px; align-items: center; }
+    .work { position: relative; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2a2118; color: #fff; padding: 8px 14px; border-radius: 999px; display: none; }
+    .toast.on { display: block; }
+    .shake { animation: sh .3s; }
+    @keyframes sh { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    h2 { font-size: 14px; margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+  <a class="lab" href="./index.html">← 9/22</a>
+  <div class="app">
+    <aside class="inv"><h2>Inventory</h2><div id="inv"></div><p style="font-size:12px;color:#876">클릭 A 다음 B, 또는 드래그</p></aside>
+    <main class="work" id="work"></main>
+    <aside class="book"><h2>도감 <span id="cnt"></span></h2><div id="book"></div></aside>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const ALL = ["Air","Earth","Fire","Water","Steam","Mud","Lava","Energy","Rain","Plant","Stone","Sand","Glass","Time","Life","Human"];
+    const REC = {
+      "Air+Fire":"Energy","Earth+Water":"Mud","Fire+Water":"Steam","Air+Water":"Rain",
+      "Earth+Fire":"Lava","Earth+Rain":"Plant","Lava+Air":"Stone","Stone+Air":"Sand",
+      "Sand+Fire":"Glass","Plant+Water":"Life","Life+Earth":"Human","Energy+Earth":"Earthquake",
+      "Rain+Earth":"Plant","Fire+Sand":"Glass","Life+Water":"Plankton"
+    };
+    let have = JSON.parse(localStorage.getItem("mixlab") || '["Air","Earth","Fire","Water"]');
+    let pick = null;
+    function toast(m) { const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),1400); }
+    function save() { localStorage.setItem("mixlab", JSON.stringify(have)); }
+    function mix(a,b) {
+      return REC[a+"+"+b] || REC[b+"+"+a];
+    }
+    function add(name) {
+      if (!have.includes(name)) { have.push(name); save(); toast("Discovered " + name); }
+    }
+    function render() {
+      document.getElementById("inv").innerHTML = have.map((n) => `<button class="chip" draggable="true" data-n="${n}">${n}</button>`).join("");
+      document.getElementById("cnt").textContent = have.length + " / " + new Set([...ALL, ...have]).size;
+      document.getElementById("book").innerHTML = [...new Set([...ALL, ...have])].map((n) =>
+        `<div class="chip" style="opacity:${have.includes(n)?1:.35}">${have.includes(n)?n:"?"}</div>`).join("");
+    }
+    function tryMix(a,b) {
+      const r = mix(a,b);
+      if (!r) { document.getElementById("work").classList.add("shake"); setTimeout(()=>document.getElementById("work").classList.remove("shake"),300); toast("힌트: 물과 흙"); return; }
+      add(r); render();
+    }
+    document.getElementById("inv").onclick = (e) => {
+      const n = e.target.dataset.n; if (!n) return;
+      if (!pick) { pick = n; e.target.style.outline = "2px solid #2a2118"; }
+      else { tryMix(pick, n); pick = null; render(); }
+    };
+    document.getElementById("inv").ondragstart = (e) => e.dataTransfer.setData("n", e.target.dataset.n);
+    document.getElementById("work").ondragover = (e) => e.preventDefault();
+    let dropped = null;
+    document.getElementById("work").ondrop = (e) => {
+      e.preventDefault();
+      const n = e.dataTransfer.getData("n");
+      if (!dropped) { dropped = n; document.getElementById("work").innerHTML = `<div class="chip">${n}</div>`; }
+      else { tryMix(dropped, n); dropped = null; document.getElementById("work").innerHTML = ""; }
+    };
+    render();
+  </script>
+</body>
+</html>
